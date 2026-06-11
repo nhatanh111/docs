@@ -5,17 +5,17 @@ const bcrypt = require('bcryptjs');
 
 const app = express();
 
-
-// ✅ THAY DÒNG NÀY (dòng cũ: app.use(cors());)
+// ✅ ĐÃ SỬA: Cho phép tất cả các nguồn kết nối tạm thời để hệ thống thông suốt, tránh lỗi CORS chặn endpoint
 app.use(cors({
-  origin: [
-    'https://your-app.vercel.app', // ← thay bằng URL Vercel thật của bạn
-    'http://localhost:5173'
-  ]
+  origin: true, 
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
 }));
+
 app.use(express.json());
 
-const JWT_SECRET = 'PVI_SECRET_KEY_2026';
+const JWT_SECRET = process.env.JWT_SECRET || 'PVI_SECRET_KEY_2026';
 
 // Dữ liệu giả lập danh sách tài khoản
 const users = [
@@ -29,7 +29,7 @@ let documents = [
   {
     id: 'doc-tnds-oto',
     title: 'PVI - Quy trình cấp đơn bảo hiểm TNDS bắt buộc Xe ô tô',
-    allowedPartners: ['pt-vifo', 'pt-momo'], // Mặc định cho phép cả 2 xem trước
+    allowedPartners: ['pt-vifo', 'pt-momo'], 
     content: {
       baseUrl: 'https://api.pvi.com.vn/v1/tnds-oto',
       endpoints: [
@@ -41,7 +41,7 @@ let documents = [
   {
     id: 'doc-tnds-xe-may',
     title: 'PVI - Tài liệu tích hợp API Bảo hiểm TNDS Xe máy',
-    allowedPartners: ['pt-vifo'], // Chỉ cho phép VIFO xem
+    allowedPartners: ['pt-vifo'], 
     content: {
       baseUrl: 'https://api.pvi.com.vn/v1/tnds-motor',
       endpoints: [
@@ -80,7 +80,6 @@ app.get('/api/documents', authenticateToken, (req, res) => {
   if (req.user.role === 'admin') {
     return res.json(documents);
   }
-  // Nếu là đối tác, lọc xem tài liệu nào chứa ID của đối tác đó trong mảng allowedPartners
   const filteredDocs = documents.filter(doc => doc.allowedPartners.includes(req.user.partnerId));
   res.json(filteredDocs);
 });
@@ -100,36 +99,33 @@ app.post('/api/admin/assign-permission', authenticateToken, (req, res) => {
   }
   res.json({ success: true, documents });
 });
+
 // API mới: Cho phép Admin thêm Endpoint vào một tài liệu cụ thể
 app.post('/api/admin/add-endpoint', authenticateToken, (req, res) => {
   if (req.user.role !== 'admin') return res.sendStatus(403);
   
   const { documentId, method, path, name, signFormula } = req.body;
   
-  // Tìm tài liệu bảo hiểm cần thêm endpoint
   const doc = documents.find(d => d.id === documentId);
   if (!doc) {
     return res.status(404).json({ message: 'Không tìm thấy tài liệu bảo hiểm' });
   }
 
-  // Kiểm tra dữ liệu đầu vào bắt buộc
   if (!method || !path || !name) {
     return res.status(400).json({ message: 'Vui lòng điền đầy đủ Method, Path và Tên Endpoint' });
   }
 
-  // Thêm endpoint mới vào mảng endpoints của tài liệu đó
   const newEndpoint = { 
     method: method.toUpperCase(), 
     path, 
     name, 
-    signFormula: signFormula || '' // Công thức chữ ký (nếu có)
+    signFormula: signFormula || '' 
   };
   
   doc.content.endpoints.push(newEndpoint);
-  
-  // Trả về danh sách tài liệu mới cập nhật
   res.json({ success: true, documents });
 });
+
 // Kích hoạt cổng lắng nghe cho Backend server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
