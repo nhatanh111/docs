@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
 
+// Đảm bảo lấy đúng URL môi trường, loại bỏ dấu / ở cuối nếu người dùng vô tình nhập thừa
+const BASE_URL = (import.meta.env.VITE_API_URL || 'https://docs-ozw6.onrender.com').replace(/\/$/, '');
+
 export default function Login({ onLoginSuccess }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -7,36 +10,51 @@ export default function Login({ onLoginSuccess }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError(''); // Reset lại lỗi cũ trước khi bấm đăng nhập
+
+    // Kiểm tra nếu chưa cấu hình biến môi trường
+    if (!BASE_URL) {
+      setError('Lỗi hệ thống: Chưa cấu hình địa chỉ API (VITE_API_URL).');
+      return;
+    }
+
     try {
-      const res = await fetch('http://localhost:5000/api/auth/login', {
+      // Gọi API đến đúng endpoint đã format sạch sẽ
+      const res = await fetch(`${BASE_URL}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })
       });
-      const data = await res.json();
+
+      // Kiểm tra xem phản hồi có phải là JSON không để tránh lỗi crash khi parse dữ liệu lỗi (như lỗi 500 html)
+      const contentType = res.headers.get("content-type");
+      let data = {};
+      if (contentType && contentType.includes("application/json")) {
+        data = await res.json();
+      }
+
       if (res.ok) {
         localStorage.setItem('token', data.token);
         onLoginSuccess(data);
       } else {
-        setError(data.message);
+        // Hiển thị tin nhắn lỗi từ Backend, nếu backend không trả về message thì dùng text mặc định
+        setError(data.message || `Đăng nhập thất bại (Mã lỗi: ${res.status})`);
       }
     } catch (err) {
-      setError('Không thể kết nối đến server backend.');
+      console.error('API Error:', err);
+      setError('Không thể kết nối đến server backend. Vui lòng kiểm tra lại mạng hoặc server.');
     }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
-      
-      {/* 1. DÙNG LINK ẢNH ONLINE - KHÔNG LO BỊ LỖI ĐƯỜNG DẪN MÁY TÍNH */}
+      {/* 1. DÙNG LINK ẢNH ONLINE */}
       <img 
         src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=2070&auto=format&fit=crop" 
         alt="PVI Building" 
         className="absolute inset-0 w-full h-full object-cover object-center z-0"
       />
       
-    
-
       {/* 3. FORM ĐĂNG NHẬP */}
       <form 
         onSubmit={handleSubmit} 
@@ -52,7 +70,7 @@ export default function Login({ onLoginSuccess }) {
         </div>
         
         {error && (
-          <div className="bg-red-50 border-l-4 border-red-500 text-red-700 p-3 rounded-r-lg mb-4 text-sm font-medium">
+          <div className="bg-red-50 border-l-4 border-red-500 text-red-700 p-3 rounded-r-lg mb-4 text-sm font-medium whitespace-pre-line">
             ⚠️ {error}
           </div>
         )}
@@ -88,7 +106,7 @@ export default function Login({ onLoginSuccess }) {
 
           <button 
             type="submit" 
-            className="w-full bg-linear-to-r from-blue-600 to-blue-800 text-white py-3.5 rounded-xl font-bold text-sm shadow-lg shadow-blue-600/30 hover:shadow-blue-600/50 hover:from-blue-700 hover:to-blue-900 active:scale-[0.98] transition-all duration-150 mt-2"
+            className="w-full bg-gradient-to-r from-blue-600 to-blue-800 text-white py-3.5 rounded-xl font-bold text-sm shadow-lg shadow-blue-600/30 hover:shadow-blue-600/50 hover:from-blue-700 hover:to-blue-900 active:scale-[0.98] transition-all duration-150 mt-2"
           >
             Đăng nhập hệ thống
           </button>
