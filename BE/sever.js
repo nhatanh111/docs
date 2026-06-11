@@ -4,7 +4,15 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 
 const app = express();
-app.use(cors());
+
+
+// ✅ THAY DÒNG NÀY (dòng cũ: app.use(cors());)
+app.use(cors({
+  origin: [
+    'https://your-app.vercel.app', // ← thay bằng URL Vercel thật của bạn
+    'http://localhost:5173'
+  ]
+}));
 app.use(express.json());
 
 const JWT_SECRET = 'PVI_SECRET_KEY_2026';
@@ -123,6 +131,7 @@ app.post('/api/admin/add-endpoint', authenticateToken, (req, res) => {
   res.json({ success: true, documents });
 });
 // Kích hoạt cổng lắng nghe cho Backend server
-app.listen(5000, () => {
-  console.log('Backend API Docs đang chạy tại port 5000...');
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+  console.log(`Backend API Docs đang chạy tại port ${PORT}...`);
 });
