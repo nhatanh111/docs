@@ -79,13 +79,13 @@ export default function App() {
 
   const filteredEndpoints = endpoints; // Giữ nguyên logic lọc nếu có
 
-  return (
+ return (
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans select-none antialiased">
       <header className="bg-slate-950 text-white px-6 py-4 flex justify-between items-center border-b border-slate-800 fixed w-full top-0 z-50 h-14 shadow-lg">
+        {/* Logo và tiêu đề giữ nguyên */}
         <div onClick={() => handleNavigate('portal')} className="flex items-center space-x-2 cursor-pointer group select-none">
           <span className="text-red-500 font-black text-xl transition-transform group-hover:scale-110 duration-200">★</span>
           <span className="font-bold tracking-wider text-lg transition-colors group-hover:text-blue-400 duration-200">PVI PORTAL</span>
-          <span className="text-[10px] bg-blue-900/60 text-blue-300 font-mono px-1.5 py-0.5 rounded-full uppercase border border-blue-800 scale-90">v1.3.0</span>
         </div>
 
         <div className="relative z-50" ref={menuRef}>
@@ -102,6 +102,19 @@ export default function App() {
                 <p className="font-bold text-slate-900 truncate">{user.name}</p>
                 <p className="text-[10px] text-blue-600 font-bold mt-0.5 uppercase tracking-wider">Quyền: {user.role === 'admin' ? 'Hệ thống Admin' : `Đối tác [${user.role}]`}</p>
               </div>
+
+              {/* MỤC QUẢN TRỊ - CHỈ HIỂN THỊ VỚI ADMIN */}
+              {user.role === 'admin' && (
+                <div className="border-b border-slate-100 pb-1 mb-1">
+                  <button type="button" onClick={() => handleNavigate('dashboard')} className="w-full text-left px-4 py-2 flex items-center space-x-2 hover:bg-slate-50 transition text-blue-700 font-semibold">
+                    <span>📊</span> <span>Bảng điều khiển (Dashboard)</span>
+                  </button>
+                  <button type="button" onClick={() => handleNavigate('permissions')} className="w-full text-left px-4 py-2 flex items-center space-x-2 hover:bg-slate-50 transition text-blue-700 font-semibold">
+                    <span>🔐</span> <span>Quản lý quyền & API</span>
+                  </button>
+                </div>
+              )}
+
               <button type="button" onClick={() => handleNavigate('portal')} className="w-full text-left px-4 py-2.5 flex items-center space-x-2 hover:bg-slate-50 transition">
                 <span>📄</span> <span>Xem giao diện Portal</span>
               </button>
