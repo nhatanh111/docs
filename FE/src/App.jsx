@@ -84,7 +84,13 @@ export default function App() {
       <header className="bg-slate-950 text-white px-6 py-4 flex justify-between items-center border-b border-slate-800 fixed w-full top-0 z-50 h-14 shadow-lg">
         {/* Logo và tiêu đề giữ nguyên */}
         <div onClick={() => handleNavigate('portal')} className="flex items-center space-x-2 cursor-pointer group select-none">
-          <span className="text-red-500 font-black text-xl transition-transform group-hover:scale-110 duration-200">★</span>
+          <div className="flex justify-center mb-0">
+            <img 
+              src="/favicon.ico" // hoặc đường dẫn logo của bạn
+              alt="PVI Portal" 
+              className="w-6 h-6" // chỉnh con số này: w-8, w-10, w-12, w-16...
+            />
+          </div>
           <span className="font-bold tracking-wider text-lg transition-colors group-hover:text-blue-400 duration-200">PVI PORTAL</span>
         </div>
 
