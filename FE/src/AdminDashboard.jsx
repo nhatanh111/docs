@@ -20,14 +20,6 @@ export default function AdminDashboard({ onChangePage }) {
         <button style={{ width: '100%', textAlign: 'left', padding: '12px', borderRadius: '8px', border: 'none', backgroundColor: '#1e293b', color: '#fff', fontWeight: 'bold', cursor: 'pointer' }}>
           📊 Quản lý chung (Dashboard)
         </button>
-        <button 
-          onClick={() => onChangePage('permissions')} 
-          style={{ width: '100%', textAlign: 'left', padding: '12px', borderRadius: '8px', border: 'none', backgroundColor: 'transparent', color: '#94a3b8', cursor: 'pointer', transition: '0.2s' }}
-          onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#1e293b'}
-          onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-        >
-          🔑 Quản lý phân quyền API
-        </button>
       </div>
 
       {/* NỘI DUNG CHÍNH CỦA TRANG QUẢN LÝ CHUNG */}
