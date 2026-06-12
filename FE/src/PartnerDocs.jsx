@@ -269,7 +269,7 @@ export default function PartnerDocs() {
     .then(data => {
       if (Array.isArray(data)) {
         const flatList = [
-          { id: "info-overview", category: "INTRODUCTION", method: "INFO", path: "Môi trường: Sandbox & Production", description: "Tổng quan hệ thống tài liệu An Biên Hub kết nối Core PVI", isCustomPage: true, pageType: "overview" },
+          
           { id: "auth-signature", category: "AUTHENTICATION", method: "HASH", path: "Thuật toán băm: MD5", description: "Quy tắc ký chữ ký bảo mật dữ liệu giao dịch (Sign)", isCustomPage: true, pageType: "signature" },
           { id: "auth-headers", category: "AUTHENTICATION", method: "INFO", path: "HTTP Headers bắt buộc kèm theo", description: "Cấu hình HTTP Headers truyền tải thông tin định danh", isCustomPage: true, pageType: "headers" }
         ];
