@@ -193,9 +193,6 @@ export default function AdminPermissions() {
               Quản lý phân quyền đồng bộ cấp độ bộ tài liệu dự án (Project) và chi tiết từng cổng kết nối (Endpoint).
             </p>
           </div>
-          <div className="bg-blue-50 border border-blue-200 text-blue-700 px-3 py-1.5 rounded-xl text-xs font-semibold">
-            Đang cấu hình: <span className="font-bold underline">VIFO & MoMo</span>
-          </div>
         </div>
 
         {/* KHU VỰC 1: FORM THÊM MỚI ENDPOINT */}
