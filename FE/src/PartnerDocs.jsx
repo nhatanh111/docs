@@ -258,6 +258,23 @@ export default function PartnerDocs() {
   const [rawProjectData, setRawProjectData] = useState([]);
   const [showPermissionModal, setShowPermissionModal] = useState(false);
 
+  // Hàm tự động tạo chuỗi câu lệnh cURL dựa trên thông tin Endpoint
+  const generateCurlCommand = (endpoint) => {
+    if (!endpoint || !endpoint.path) return "";
+    const domain = "https://api.pvi.com.vn"; 
+    let curl = `curl --location '${domain}${endpoint.path}' \\\n`;
+    curl += `--method '${endpoint.method || 'POST'}' \\\n`;
+    curl += `--header 'Content-Type: application/json' \\\n`;
+    curl += `--header 'Authorization: Bearer YOUR_ACCESS_TOKEN'`;
+
+    if (['POST', 'PUT'].includes(endpoint.method)) {
+      // Ưu tiên dùng Request Sample hiện tại nếu có, không thì fallback về cấu trúc rỗng
+      const sampleData = endpoint.requestSample ? (typeof endpoint.requestSample === 'object' ? JSON.stringify(endpoint.requestSample, null, 2) : endpoint.requestSample) : '{\n  "request_id": "REQ_2026"\n}';
+      curl += ` \\\n--data '${sampleData}'`;
+    }
+    return curl;
+  };
+
   const fetchApiDocuments = useCallback(() => {
     const backendUrl = import.meta.env.VITE_API_URL || 'https://docs-ozw6.onrender.com';
     const token = localStorage.getItem('token');
@@ -269,7 +286,6 @@ export default function PartnerDocs() {
     .then(data => {
       if (Array.isArray(data)) {
         const flatList = [
-          
           { id: "auth-signature", category: "AUTHENTICATION", method: "HASH", path: "Thuật toán băm: MD5", description: "Quy tắc ký chữ ký bảo mật dữ liệu giao dịch (Sign)", isCustomPage: true, pageType: "signature" },
           { id: "auth-headers", category: "AUTHENTICATION", method: "INFO", path: "HTTP Headers bắt buộc kèm theo", description: "Cấu hình HTTP Headers truyền tải thông tin định danh", isCustomPage: true, pageType: "headers" }
         ];
@@ -387,10 +403,23 @@ export default function PartnerDocs() {
   useEffect(() => {
     const initialBodies = {};
     activeEndpoints.forEach(ep => {
-      initialBodies[ep.id] = ep.requestSample ? cleanJsonString(ep.requestSample) : '{}';
+      const sampleText = ep.requestSample ? cleanJsonString(ep.requestSample) : '{}';
+      initialBodies[ep.id] = sampleText;
+      // Khởi tạo state lưu trữ riêng cho mã cURL tự gõ/paste của từng endpoint
+      initialBodies[ep.id + '_curl'] = generateCurlCommand(ep);
     });
     setRequestBodies(initialBodies);
   }, [activeEndpoints]);
+
+  // Đồng bộ lại chuỗi cURL mẫu khi người dùng chuyển tab Endpoint khác
+  useEffect(() => {
+    if (currentActiveEp && !requestBodies[currentActiveEp.id + '_curl']) {
+      setRequestBodies(prev => ({
+        ...prev,
+        [currentActiveEp.id + '_curl']: generateCurlCommand(currentActiveEp)
+      }));
+    }
+  }, [activeEpId]);
 
   useEffect(() => {
     if (activeEndpoints.length === 0) return;
@@ -442,7 +471,17 @@ export default function PartnerDocs() {
           if (parsed[key] !== validatedValue) { parsed[key] = validatedValue; hasChanged = true; }
         }
       });
-      setRequestBodies(prev => ({ ...prev, [id]: hasChanged ? JSON.stringify(parsed, null, 2) : rawText }));
+      
+      const nextBodyText = hasChanged ? JSON.stringify(parsed, null, 2) : rawText;
+      setRequestBodies(prev => {
+        const updated = { ...prev, [id]: nextBodyText };
+        // Khi sửa Body bằng tay, sinh lại cURL mẫu tương ứng phía dưới
+        const mockEp = activeEndpoints.find(e => e.id === id);
+        if (mockEp) {
+          updated[id + '_curl'] = generateCurlCommand({ ...mockEp, requestSample: nextBodyText });
+        }
+        return updated;
+      });
     } catch (e) {
       setRequestBodies(prev => ({ ...prev, [id]: rawText }));
     }
@@ -663,8 +702,6 @@ export default function PartnerDocs() {
         ref={sidebarScrollRef}
         className="w-80 shrink-0 border-r border-slate-200 bg-slate-50 p-4 overflow-y-auto space-y-4 text-xs select-none flex flex-col"
       >
-        {/* Đã xóa bỏ hoàn toàn khung banner PVI Developer Portal v1.3.0 và nút Quản lý quyền theo hình image_b0ec83.png */}
-
         <div className="flex-1 overflow-y-auto space-y-4 pr-1 custom-scrollbar">
           {categories.map((cat, cIdx) => (
             <div key={cIdx} className="space-y-1">
@@ -808,6 +845,61 @@ export default function PartnerDocs() {
                   <span className="text-slate-600 italic">// Click nút Execute phía trên để nhận dữ liệu JSON phản hồi giả lập từ Core...</span>
                 )}
               </div>
+            </div>
+
+            {/* KHỐI cURL EXAMPLE ĐÃ ĐƯỢC NÂNG CẤP THÀNH TEXTAREA ĐỘNG VÀ PARSER HOÀN CHỈNH */}
+            <div className="space-y-3 mt-4 pt-4 border-t border-slate-800">
+              <div className="flex items-center justify-between">
+                <div className="text-[9px] uppercase text-slate-500 font-bold tracking-wider flex items-center gap-1">
+                  <span>⚡</span> cURL Command Example & Sandbox Input
+                </div>
+                <button
+                  onClick={async () => {
+                    const curlText = requestBodies[currentActiveEp?.id + '_curl'] || generateCurlCommand(currentActiveEp);
+                    if (curlText) {
+                      await navigator.clipboard.writeText(curlText);
+                      alert("📋 Đã copy đoạn mã cURL vào bộ nhớ đệm!");
+                    }
+                  }}
+                  className="text-[10px] px-2 py-1 rounded bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white transition-all cursor-pointer border border-slate-700 font-sans font-bold"
+                >
+                  📋 Copy cURL
+                </button>
+              </div>
+              <div className="bg-slate-950 rounded-lg border border-slate-800 shadow-inner max-w-full overflow-hidden">
+                <textarea
+                  value={requestBodies[currentActiveEp?.id + '_curl'] || ''}
+                  onChange={(e) => {
+                    const inputCurl = e.target.value;
+                    
+                    // 1. Cập nhật nội dung hiển thị trong ô cURL text
+                    setRequestBodies(prev => ({
+                      ...prev,
+                      [currentActiveEp?.id + '_curl']: inputCurl
+                    }));
+
+                    // 2. Trình phân tách Parser bóc tách dữ liệu JSON để đồng bộ ngược lên Sandbox
+                    try {
+                      // Regex bắt các chuỗi JSON hợp lệ nằm sau cờ --data hoặc -d
+                      const bodyMatch = inputCurl.match(/(?:--data|-d)\s+'([\s\S]*?)'/);
+                      if (bodyMatch && bodyMatch[1]) {
+                        const cleanJson = bodyMatch[1].trim();
+                        JSON.parse(cleanJson); // Kiểm tra tính hợp lệ của định dạng JSON
+                        
+                        // Nếu đúng cú pháp JSON, cập nhật và đồng bộ thẳng lên ô REQUEST BODY SAMPLE
+                        handleTextareaChange(currentActiveEp?.id, cleanJson);
+                      }
+                    } catch (err) {
+                      // Bỏ qua lỗi nếu đối tác đang paste hoặc gõ dở chuỗi chưa chuẩn định dạng
+                    }
+                  }}
+                  className="w-full h-32 bg-slate-950 text-emerald-400 font-mono text-[11px] leading-normal p-3 resize-none border-0 focus:outline-none focus:ring-1 focus:ring-blue-500 select-text custom-scrollbar text-left"
+                  placeholder="// Đối tác có thể dán hoặc sửa mã cURL bất kỳ tại đây để đồng bộ hệ thống..."
+                />
+              </div>
+              <p className="text-[10px] text-slate-500 font-sans italic leading-normal text-left">
+                * Gợi ý: Đối tác có thể dán code cURL tùy biến của họ vào đây. Trình xử lý sẽ tự bóc tách chuỗi JSON data và đồng bộ lên khung Sandbox chạy thử nghiệm phía trên.
+              </p>
             </div>
           </>
         )}
