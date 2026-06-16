@@ -257,6 +257,23 @@ export default function PartnerDocs() {
   const [realEndpoints, setRealEndpoints] = useState([]);
   const [rawProjectData, setRawProjectData] = useState([]);
   const [showPermissionModal, setShowPermissionModal] = useState(false);
+// CHỨC NĂNG ĐĂNG XUẤT: Xóa token và tải lại trang / điều hướng
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    alert("🔒 Đã đăng xuất tài khoản quản trị thành công!");
+    window.location.reload(); // Hoặc dùng useNavigate('/login') nếu bạn dùng react-router-dom
+  };
+
+  // Lắng nghe sự kiện click ngoài màn hình để tự động đóng dropdown profile
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowUserDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Hàm tự động tạo chuỗi câu lệnh cURL dựa trên thông tin Endpoint
   const generateCurlCommand = (endpoint) => {
@@ -266,6 +283,7 @@ export default function PartnerDocs() {
     curl += `--method '${endpoint.method || 'POST'}' \\\n`;
     curl += `--header 'Content-Type: application/json' \\\n`;
     curl += `--header 'Authorization: Bearer YOUR_ACCESS_TOKEN'`;
+    
 
     if (['POST', 'PUT'].includes(endpoint.method)) {
       // Ưu tiên dùng Request Sample hiện tại nếu có, không thì fallback về cấu trúc rỗng
@@ -995,4 +1013,4 @@ export default function PartnerDocs() {
 
     </div>
   );
-}
+}   

@@ -106,7 +106,7 @@ export default function App() {
             <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-2xl border border-slate-200 py-2 text-slate-700 z-[100] text-xs block">
               <div className="px-4 py-2 border-b border-slate-100 mb-1 bg-slate-50/50 rounded-t-xl">
                 <p className="font-bold text-slate-900 truncate">{user.name}</p>
-                <p className="text-[10px] text-blue-600 font-bold mt-0.5 uppercase tracking-wider">Quyền: {user.role === 'admin' ? 'Hệ thống Admin' : `Đối tác [${user.role}]`}</p>
+                <p className="text-[10px] text-blue-600 font-bold mt-0.5 uppercase tracking-wider whitespace-nowrap"> Quyền: {user.role === 'admin' ? 'Hệ thống Admin' : `Đối tác [${user.role}]`}</p>
               </div>
 
               {/* MỤC QUẢN TRỊ - CHỈ HIỂN THỊ VỚI ADMIN */}
@@ -121,9 +121,6 @@ export default function App() {
                 </div>
               )}
 
-              <button type="button" onClick={() => handleNavigate('portal')} className="w-full text-left px-4 py-2.5 flex items-center space-x-2 hover:bg-slate-50 transition">
-                <span>📄</span> <span>Xem giao diện Portal</span>
-              </button>
               <button type="button" onClick={handleLogout} className="w-full text-left px-4 py-2.5 text-red-600 hover:bg-red-50 flex items-center space-x-2 font-semibold">
                 <span>🚪</span> <span>Đăng xuất hệ thống</span>
               </button>
