@@ -1,296 +1,37 @@
+// PartnerDocs.jsx
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-
-// =========================================================================
-// 1. TỪ ĐIỂN ĐỊNH NGHĨA RÀNG BUỘC CÁC TRƯỜNG DỮ LIỆU ĐẶC THÙ (VALIDATION LIMITS)
-// =========================================================================
-const VALIDATION_LIMITS = {
-  so_cho: { min: 1, max: 50, label: "1 đến 50 chỗ" },
-  ChoNgoi: { min: 1, max: 50, label: "1 đến 50 chỗ" },
-  SoNguoiToiDa: { min: 1, max: 50, label: "1 đến 50 người" },
-  so_nguoi: { min: 1, max: 50, label: "1 đến 50 người" },
-  so_nguoi_tgia_laiphu: { min: 1, max: 50, label: "1 đến 50 người" },
-  mtn_laiphu: { min: 0, max: 200000000, label: "Tối đa 200M VNĐ" },
-  MTNLaiPhu: { min: 0, max: 200000000, label: "Tối đa 200M VNĐ" },
-  muc_trachnhiem_laiphu: { min: 0, max: 200000000, label: "Tối đa 200M VNĐ" },
-  PhiBHLaiPhu: { min: 0, max: 200000000, label: "Tối đa 200M VNĐ" },
-  PhiBHTNDSBB: { min: 0, max: 200000000, label: "Tối đa 200M VNĐ" },
-  phi_tndsbb: { min: 0, max: 200000000, label: "Tối đa 200M VNĐ" },
-  phi_lpx: { min: 0, max: 200000000, label: "Tối đa 200M VNĐ" },
-  phi_moto: { min: 0, max: 200000000, label: "Tối đa 200M VNĐ" },
-  phi_laiphu: { min: 0, max: 200000000, label: "Tối đa 200M VNĐ" },
-  TongPhi: { min: 1, max: 500000000, label: "1 đến 500M VNĐ" },
-  TotalFee: { min: 1, max: 500000000, label: "1 đến 500M VNĐ" }
-};
-
-// =========================================================================
-// 2. DANH SÁCH TOÀN BỘ ENDPOINTS MẶC ĐỊNH DỰ PHÒNG (DEFAULT FALLBACK)
-// =========================================================================
-const DEFAULT_ENDPOINTS = [
-  {
-    id: "auth-api-keys",
-    category: "AUTHENTICATION",
-    method: "POST",
-    path: "/api/pvi/v1/oauth2/token",
-    description: "Khởi tạo Access Token (OAuth2 Client Credentials)",
-    requestSample: { client_id: "PARTNER_ANBIEN_ID", client_secret: "pvi_secret_key_abc123", grant_type: "client_credentials" },
-    responseFormat: { status: "success", access_token: "eyJhbGciOiJIUzI1Ni...", expires_in: 86400, token_type: "Bearer" }
-  },
-  {
-    id: "auth-signature",
-    category: "AUTHENTICATION",
-    method: "HASH",
-    path: "Thuật toán băm: MD5",
-    description: "Quy tắc ký chữ ký bảo mật dữ liệu giao dịch (Sign)",
-    isCustomPage: true,
-    pageType: "signature"
-  },
-  {
-    id: "auth-headers",
-    category: "AUTHENTICATION",
-    method: "INFO",
-    path: "HTTP Headers bắt buộc kèm theo",
-    description: "Cấu hình HTTP Headers truyền tải thông tin định danh",
-    isCustomPage: true,
-    pageType: "headers"
-  },
-  {
-    id: "api-calculate-premium-moto",
-    category: "BẢO HIỂM XE MÁY",
-    method: "POST",
-    path: "/api/pvi/v1/insurance/moto/calculate",
-    description: "Tính toán tổng phí bảo hiểm bắt buộc & tự nguyện xe máy",
-    requestSample: { CpId: "PARTNER_ANBIEN_2026", Sign: "7ac110780f2d5902", loai_xe: "MOTO_01", muc_trachnhiem_laiphu: 20000000, so_nguoi_tgia_laiphu: 2 },
-    responseFormat: { Status: "00", Message: "Tính phí xe máy thành công", Data: { phi_moto: 66000, phi_laiphu: 40000, TongPhi: 106000 } }
-  },
-  {
-    id: "api-insert-moto",
-    category: "BẢO HIỂM XE MÁY",
-    method: "POST",
-    path: "/api/pvi/v1/insurance/insert-moto",
-    description: "Đăng ký thông tin cấp ấn chỉ bảo hiểm Xe Máy",
-    requestSample: { CpId: "PARTNER_ANBIEN_2026", Sign: "b2c3d4e5f6g7h8i9", ten_nguoimua_bh: "Trần Thị B", so_dienthoai: "0912345678", TongPhi: 106000, ma_giaodich: "GD_MOTO_992" },
-    responseFormat: { Status: "00", Message: "Cấp đơn xe máy thành công", TotalFee: 106000, Data: { so_gcn: "GCN/MOTO/2026/002" } }
-  },
-  {
-    id: "api-calculate-premium-oto",
-    category: "BẢO HIỂM XE Ô TÔ",
-    method: "POST",
-    path: "/api/pvi/v1/insurance/calculate-premium",
-    description: "Tính phí bảo hiểm trách nhiệm dân sự bắt buộc xe ô tô",
-    requestSample: { CpId: "PARTNER_ANBIEN_2026", Sign: "41d8e12a0f2d5902", ma_loaixe: "X01", so_cho: 5, thamgia_laiphu: true, so_nguoi: 5, mtn_laiphu: 50000000 },
-    responseFormat: { Status: "00", Message: "Tính phí ô tô thành công", Data: { PhiBHTNDSBB: 437000, PhiBHLaiPhu: 100000, ThueVAT: 53700, TongPhi: 590700 } }
-  },
-  {
-    id: "api-insert-oto",
-    category: "BẢO HIỂM XE Ô TÔ",
-    method: "POST",
-    path: "/api/pvi/v1/insurance/insert-oto",
-    description: "Đẩy dữ liệu thông tin chủ xe, số khung số máy cấp đơn ô tô",
-    requestSample: { CpId: "PARTNER_ANBIEN_2026", Sign: "a1b2c3d4e5f6g7h8", TenKH: "Nguyễn Văn A", DienThoai: "0901234567", ChoNgoi: 5, TongPhi: 590700, SoKhung: "RLH43219876", SoMay: "2AZ123456" },
-    responseFormat: { Status: "00", Message: "Cấp đơn ô tô thành công", TotalFee: 590700, Data: { ma_giaodich: "GD_OTO_2026_01", so_gcn: "GCN/OTO/2026/001", Pr_key: 1256789 } }
-  },
-  {
-    id: "api-get-car-categories",
-    category: "HỆ THỐNG DANH MỤC",
-    method: "POST",
-    path: "/api/pvi/v1/categories/vehicle",
-    description: "Truy vấn các bộ mã danh mục dùng chung (Loại xe, Mục đích sử dụng)",
-    requestSample: { CpId: "PARTNER_ANBIEN_2026", Sign: "9cb100780f2d5902", type: "OTO" },
-    responseFormat: { Status: "00", Message: "Lấy dữ liệu danh mục thành công", Data: [{ Value: "X01", Text: "Xe ô tô dưới 6 chỗ không kinh doanh vận tải" }] }
-  },
-  {
-    id: "api-query-order",
-    category: "QUẢN LÝ ĐƠN HÀNG & SAU BÁN",
-    method: "POST",
-    path: "/api/pvi/v1/insurance/query-order",
-    description: "Tra cứu trạng thái phát hành và tiến độ xử lý đơn hàng",
-    requestSample: { CpId: "PARTNER_ANBIEN_2026", Sign: "8eb100780f2d5902", ma_giaodich: "GD_OTO_2026_01" },
-    responseFormat: { Status: "00", Message: "Thành công", Data: { ma_giaodich: "GD_OTO_2026_01", so_gcn: "GCN/OTO/2026/001", trang_thai: "ACTIVATED", ngay_phathanh: "11/06/2026 10:30" } }
-  },
-  {
-    id: "api-download-pdf",
-    category: "QUẢN LÝ ĐƠN HÀNG & SAU BÁN",
-    method: "POST",
-    path: "/api/pvi/v1/insurance/download-pdf",
-    description: "Lấy đường dẫn URL tải file Giấy chứng nhận điện tử (PDF)",
-    requestSample: { CpId: "PARTNER_ANBIEN_2026", Sign: "1cb100780f2d5902", so_gcn: "GCN/OTO/2026/001" },
-    responseFormat: { Status: "00", Message: "Thành công", link: "https://e-cert.pvi.com.vn/download/pdf/GCN-OTO-2026.pdf", media_type: "application/pdf" }
-  },
-  {
-    id: "api-submit-claim",
-    category: "HỖ TRỢ BỒI THƯỜNG",
-    method: "POST",
-    path: "/api/pvi/v1/claim/register",
-    description: "Khai báo tổn thất, gửi yêu cầu duyệt bồi thường trực tuyến",
-    requestSample: { CpId: "PARTNER_ANBIEN_2026", Sign: "5ab100780f2d5902", so_gcn: "GCN/OTO/2026/001", mo_ta_su_co: "Xe va chạm quẹt vào dải phân cách", hinh_anh_hieng_truong: ["https://image-store.com/claim/img01.jpg"] },
-    responseFormat: { Status: "00", Message: "Tiếp nhận thành công", Data: { claim_id_str: "CLAIM_2026_9921", status_code: 200 } }
-  },
-  {
-    id: "api-einvoice-issue",
-    category: "HÓA ĐƠN ĐIỆN TỬ (E-INVOICE)",
-    method: "POST",
-    path: "/api/pvi/v1/einvoice/issue",
-    description: "Yêu cầu phát hành hóa đơn tài chính GTGT điện tử",
-    requestSample: { CpId: "PARTNER_ANBIEN_2026", so_gcn: "GCN/OTO/2026/001", MaSoThue: "0101234567", TenDonVi: "Công ty TNHH An Biên", DiaChiHoaDon: "Quận 1, TP. HCM" },
-    responseFormat: { Status: "00", Message: "Phát hành hóa đơn thành công", MaSoBaoMat: "INV-99281-2026", LinkHoaDon: "https://einvoice.pvi.com.vn/view/inv-99281" }
-  },
-  {
-    id: "api-recon-daily",
-    category: "ĐỐI SOÁT & KẾ TOÁN",
-    method: "POST",
-    path: "/api/pvi/v1/finance/reconciliation",
-    description: "Đối soát danh sách giao dịch định kỳ theo ngày dòng tiền",
-    requestSample: { CpId: "PARTNER_ANBIEN_2026", NgayDoiSoat: "11/06/2026", LoaiAnChi: "OTO" },
-    responseFormat: { Status: "00", Message: "Trùng khớp dữ liệu đối soát", TongSoDon: 142, TongDoanhThu: 76230000, TrangThaiDoiSoat: "MATCHED" }
-  },
-  {
-    id: "api-agent-commission",
-    category: "QUẢN LÝ ĐẠI LÝ KÊNH BÁN",
-    method: "POST",
-    path: "/api/pvi/v1/agent/commission-query",
-    description: "Tra cứu tỷ lệ chiết khấu thương mại của điểm bán hoa hồng",
-    requestSample: { CpId: "PARTNER_ANBIEN_2026", AgentCode: "SUB_AG_HCM_01", MaLoaiAnChi: "MOTO" },
-    responseFormat: { Status: "00", Message: "Lấy cấu hình thành công", TyleChietKhau: 0.15, PhisauChietKhau: 85000 }
-  },
-  {
-    id: "api-endorse-cancel",
-    category: "SỬA ĐỔI & HỦY BỎ ĐƠN",
-    method: "POST",
-    path: "/api/pvi/v1/endorsement/cancel-order",
-    description: "Gửi yêu cầu hoàn phí hoặc hủy bỏ hiệu lực ấn chỉ",
-    requestSample: { CpId: "PARTNER_ANBIEN_2026", so_gcn: "GCN/OTO/2026/001", LyDoHuy: "Khách hàng bán xe, đổi sang đơn vị khác" },
-    responseFormat: { Status: "00", Message: "Yêu cầu hủy đơn đã được tiếp nhận", TrangThaiDon: "PENDING_CANCELLATION", PhiHoanLaiDuKien: 320000 }
-  },
-  {
-    id: "api-crm-renewal-check",
-    category: "CRM & CHĂM SÓC KHÁCH HÀNG",
-    method: "POST",
-    path: "/api/pvi/v1/crm/renewal-check",
-    description: "Kiểm tra danh sách đơn bảo hiểm sắp hết hạn để tái tục",
-    requestSample: { CpId: "PARTNER_ANBIEN_2026", SoNgaySapHetHan: 30, ChiNhanhQuanLy: "HCM" },
-    responseFormat: { Status: "00", Message: "Tìm thấy dữ liệu tái tục", DanhSachSapHetHan: [{ SoGCN: "GCN/OTO/2025/882", TenKhachHang: "Vũ Văn C", NgayHetHan: "12/07/2026" }] }
-  },
-  {
-    id: "api-uw-risk-assess",
-    category: "THẨM ĐỊNH RỦI RO ĐẶC BIỆT",
-    method: "POST",
-    path: "/api/pvi/v1/underwriting/risk-assess",
-    description: "Đánh giá rủi ro tự động cho phương tiện giá trị lớn",
-    requestSample: { CpId: "PARTNER_ANBIEN_2026", GiaTriXe: 6500000000, MụcDichSuDung: "Vận tải hạng nặng chuyên dụng" },
-    responseFormat: { Status: "01", Message: "Vượt hạn mức duyệt tự động - Chuyển chuyên viên", KquaThamDinh: "REFER_TO_UW", MaHoSoThamDinh: "UW-OTO-2026-009" }
-  },
-  {
-    id: "api-reinsurance-share",
-    category: "QUẢN LÝ TÁI BẢO HIỂM",
-    method: "POST",
-    path: "/api/pvi/v1/reinsurance/share-assess",
-    description: "Tính toán tỷ lệ giữ lại và phân giao tái bảo hiểm",
-    requestSample: { CpId: "PARTNER_ANBIEN_2026", TongMucTrachNhiem: 15000000000, MaNghiepVu: "KỸ THUẬT TÀI SẢN XE" },
-    responseFormat: { Status: "00", Message: "Phân bổ thành công", TyLeGiuLai: 0.20, TyLeTaiPhanGiao: 0.80, NhaTaiBaoHiemGoc: "PVI RE" }
-  },
-  {
-    id: "ref-dictionary",
-    category: "REFERENCE CENTER",
-    method: "DATA",
-    path: "Từ điển dữ liệu toàn bộ hệ thống",
-    description: "Data Dictionary - Tra cứu giải nghĩa định nghĩa tham số",
-    isCustomPage: true,
-    pageType: "dictionary"
-  },
-  {
-    id: "ref-status-codes",
-    category: "REFERENCE CENTER",
-    method: "CODE",
-    path: "Mã lỗi quy ước hệ thống Core PVI",
-    description: "Status & Error Codes - Bảng tra cứu mã phản hồi hệ thống",
-    isCustomPage: true,
-    pageType: "error-codes"
-  },
-  {
-    id: "changelog-versions",
-    category: "CHANGELOG",
-    method: "VER",
-    path: "Nhật ký nâng cấp phiên bản",
-    description: "Versions - Thông tin cập nhật hệ thống cổng kết nối",
-    isCustomPage: true,
-    pageType: "changelog"
-  }
-];
-
-const ERROR_CODES_DATA = [
-  ["00", "Success - Giao dịch thành công hoàn tất cấp ấn chỉ"],
-  ["01", "Invalid Signature - Chữ ký bảo mật không hợp lệ hoặc sai thuật toán băm"],
-  ["02", "Missing CpId - Thiếu mã định danh duy nhất của Đối tác (Partner ID)"],
-  ["03", "Missing Parameter - Thiếu các trường dữ liệu bắt buộc trong Request Payload JSON"],
-  ["04", "Policy Not Found - Không tìm thấy Số giấy chứng nhận bảo hiểm trên Core"],
-  ["05", "Internal Error - Hệ thống Core PVI gặp sự cố xử lý gián đoạn dịch vụ"]
-];
-
-const FIELD_DICTIONARY = {
-  client_id: "ID cổng ứng dụng phục vụ lấy Access Token OAuth2 bảo mật kết nối",
-  client_secret: "Mật khẩu ứng dụng bí mật kết nối an toàn cấp cao hệ thống",
-  grant_type: "Phương thức cấp quyền xác thực tài khoản (Mặc định: client_credentials)",
-  access_token: "Chuỗi Access Token đại diện cho phiên kết nối hợp lệ của đối tác",
-  expires_in: "Thời gian hiệu lực của Access Token tính bằng giây (Mặc định: 86400s = 24h)",
-  token_type: "Loại Token định dạng cấu trúc mã hóa xác thực (Bearer token)",
-  Sign: "Chữ ký bảo mật kết nối mã hóa dạng chuỗi băm MD5",
-  CpId: "Mã định danh duy nhất của Đối tác được PVI cấp phát",
-  TenKH: "Họ và tên khách hàng đại diện mua đơn ấn chỉ",
-  so_cho: "Số chỗ ngồi đăng ký chính thức của phương tiện xe",
-  mtn_laiphu: "Mức trách nhiệm bảo hiểm tai nạn lái phụ xe lựa chọn",
-  so_nguoi: "Số người tham gia bảo hiểm tai nạn ngồi trên xe",
-  TongPhi: "Tổng số tiền phí bảo hiểm đối tác cần gạch nợ thanh toán",
-  Status: "Mã trạng thái phản hồi kết quả (Mặc định 00 là thành công)",
-  Message: "Thông báo mô tả chi tiết kết quả xử lý giao dịch hệ thống",
-  TotalFee: "Tổng phí bảo hiểm cuối cùng đã bao gồm thuế VAT",
-  Data: "Dữ liệu hoặc danh sách mảng chứa các đối tượng nghiệp vụ trả về",
-  so_gcn: "Số Giấy chứng nhận bảo hiểm chính thức do hệ thống PVI cấp phát",
-  ma_giaodich: "Mã đối tác tự sinh để quản lý đối soát đơn hàng",
-  NgayDoiSoat: "Ngày thực hiện đối soát dữ liệu dòng tiền kế toán (DD/MM/YYYY)",
-  TongSoDon: "Tổng số lượng đơn hàng bảo hiểm phát sinh trong kỳ đối soát",
-  TongDoanhThu: "Tổng số tiền doanh thu phí bảo hiểm tích lũy thu được",
-  AgentCode: "Mã quản lý duy nhất của Đại lý hoặc CTV cấp dưới",
-  TyleChietKhau: "Tỷ lệ hoa hồng chiết khấu được hưởng thương mại (Ví dụ: 0.15 = 15%)"
-};
+import PermissionModal from './PermissionModal'; 
+import { 
+  VALIDATION_LIMITS, 
+  DEFAULT_ENDPOINTS, 
+  ERROR_CODES_DATA, 
+  FIELD_DICTIONARY,
+  SUPPORTED_LANGUAGES,
+  generateLanguageSnippet 
+} from './MockData'; 
 
 export default function PartnerDocs() {
   const [realEndpoints, setRealEndpoints] = useState([]);
   const [rawProjectData, setRawProjectData] = useState([]);
   const [showPermissionModal, setShowPermissionModal] = useState(false);
-// CHỨC NĂNG ĐĂNG XUẤT: Xóa token và tải lại trang / điều hướng
+  const [activeEpId, setActiveEpId] = useState(null);
+  const [authToken, setAuthToken] = useState('pvi_secret_access_key_2026');
+  const [requestBodies, setRequestBodies] = useState({});
+  const [apiResponses, setApiResponses] = useState({});
+  const [loadingStates, setLoadingStates] = useState({});
+  const [selectedLang, setSelectedLang] = useState('curl'); // Quản lý ngôn ngữ code mẫu
+  const [isFormMode, setIsFormMode] = useState(true); // Switch giữa Form nhập và JSON thô
+
+  const middleScrollRef = useRef(null);
+  const sidebarScrollRef = useRef(null);
+  const apiRefs = useRef({});
+  const isClickScrolling = useRef(false);
+  const observerRef = useRef(null);
+
   const handleLogout = () => {
     localStorage.removeItem('token');
     alert("🔒 Đã đăng xuất tài khoản quản trị thành công!");
-    window.location.reload(); // Hoặc dùng useNavigate('/login') nếu bạn dùng react-router-dom
-  };
-
-  // Lắng nghe sự kiện click ngoài màn hình để tự động đóng dropdown profile
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setShowUserDropdown(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  // Hàm tự động tạo chuỗi câu lệnh cURL dựa trên thông tin Endpoint
-  const generateCurlCommand = (endpoint) => {
-    if (!endpoint || !endpoint.path) return "";
-    const domain = "https://api.pvi.com.vn"; 
-    let curl = `curl --location '${domain}${endpoint.path}' \\\n`;
-    curl += `--method '${endpoint.method || 'POST'}' \\\n`;
-    curl += `--header 'Content-Type: application/json' \\\n`;
-    curl += `--header 'Authorization: Bearer YOUR_ACCESS_TOKEN'`;
-    
-
-    if (['POST', 'PUT'].includes(endpoint.method)) {
-      // Ưu tiên dùng Request Sample hiện tại nếu có, không thì fallback về cấu trúc rỗng
-      const sampleData = endpoint.requestSample ? (typeof endpoint.requestSample === 'object' ? JSON.stringify(endpoint.requestSample, null, 2) : endpoint.requestSample) : '{\n  "request_id": "REQ_2026"\n}';
-      curl += ` \\\n--data '${sampleData}'`;
-    }
-    return curl;
+    window.location.reload();
   };
 
   const fetchApiDocuments = useCallback(() => {
@@ -367,18 +108,7 @@ export default function PartnerDocs() {
   };
 
   const activeEndpoints = realEndpoints.length > 0 ? realEndpoints : DEFAULT_ENDPOINTS;
-
-  const [activeEpId, setActiveEpId] = useState(null);
-  const [authToken, setAuthToken] = useState('pvi_secret_access_key_2026');
-  const [requestBodies, setRequestBodies] = useState({});
-  const [apiResponses, setApiResponses] = useState({});
-  const [loadingStates, setLoadingStates] = useState({});
-
-  const middleScrollRef = useRef(null);
-  const sidebarScrollRef = useRef(null);
-  const apiRefs = useRef({});
-  const isClickScrolling = useRef(false);
-  const observerRef = useRef(null);
+  const currentActiveEp = activeEndpoints.find(e => e.id === activeEpId) || activeEndpoints[0];
 
   useEffect(() => {
     if (activeEndpoints.length > 0 && !activeEpId) {
@@ -390,10 +120,7 @@ export default function PartnerDocs() {
     const sidebar = sidebarScrollRef.current;
     const btn = document.getElementById(`sidebar-item-${id}`);
     if (!sidebar || !btn) return;
-
-    const btnOffsetTop = btn.offsetTop;
-    const targetScroll = btnOffsetTop - (sidebar.clientHeight / 2) + (btn.offsetHeight / 2);
-
+    const targetScroll = btn.offsetTop - (sidebar.clientHeight / 2) + (btn.offsetHeight / 2);
     sidebar.scrollTo({ top: Math.max(0, targetScroll), behavior: 'smooth' });
   }, []);
 
@@ -423,21 +150,9 @@ export default function PartnerDocs() {
     activeEndpoints.forEach(ep => {
       const sampleText = ep.requestSample ? cleanJsonString(ep.requestSample) : '{}';
       initialBodies[ep.id] = sampleText;
-      // Khởi tạo state lưu trữ riêng cho mã cURL tự gõ/paste của từng endpoint
-      initialBodies[ep.id + '_curl'] = generateCurlCommand(ep);
     });
     setRequestBodies(initialBodies);
   }, [activeEndpoints]);
-
-  // Đồng bộ lại chuỗi cURL mẫu khi người dùng chuyển tab Endpoint khác
-  useEffect(() => {
-    if (currentActiveEp && !requestBodies[currentActiveEp.id + '_curl']) {
-      setRequestBodies(prev => ({
-        ...prev,
-        [currentActiveEp.id + '_curl']: generateCurlCommand(currentActiveEp)
-      }));
-    }
-  }, [activeEpId]);
 
   useEffect(() => {
     if (activeEndpoints.length === 0) return;
@@ -446,25 +161,18 @@ export default function PartnerDocs() {
     observerRef.current = new IntersectionObserver(
       (entries) => {
         if (isClickScrolling.current) return;
-
         const visibleEntries = entries.filter(e => e.isIntersecting);
         if (visibleEntries.length === 0) return;
-
         const best = visibleEntries.reduce((prev, curr) =>
           Math.abs(curr.boundingClientRect.top) < Math.abs(prev.boundingClientRect.top) ? curr : prev
         );
-
         const id = best.target.dataset.apiId;
         if (id) {
           setActiveEpId(id);
           scrollSidebarToActive(id);
         }
       },
-      {
-        root: middleScrollRef.current,
-        rootMargin: '-10% 0px -70% 0px',
-        threshold: 0
-      }
+      { root: middleScrollRef.current, rootMargin: '-10% 0px -70% 0px', threshold: 0 }
     );
 
     Object.values(apiRefs.current).forEach(el => {
@@ -491,18 +199,73 @@ export default function PartnerDocs() {
       });
       
       const nextBodyText = hasChanged ? JSON.stringify(parsed, null, 2) : rawText;
-      setRequestBodies(prev => {
-        const updated = { ...prev, [id]: nextBodyText };
-        // Khi sửa Body bằng tay, sinh lại cURL mẫu tương ứng phía dưới
-        const mockEp = activeEndpoints.find(e => e.id === id);
-        if (mockEp) {
-          updated[id + '_curl'] = generateCurlCommand({ ...mockEp, requestSample: nextBodyText });
-        }
-        return updated;
-      });
+      setRequestBodies(prev => ({ ...prev, [id]: nextBodyText }));
     } catch (e) {
       setRequestBodies(prev => ({ ...prev, [id]: rawText }));
     }
+  };
+
+  // Cập nhật giá trị từ các ô input của Form UI vào chuỗi JSON gốc
+  const handleFormFieldChange = (id, key, val) => {
+    try {
+      const currentBody = JSON.parse(requestBodies[id] || '{}');
+      currentBody[key] = val;
+      handleTextareaChange(id, JSON.stringify(currentBody, null, 2));
+    } catch (e) {
+      console.error("Lỗi đồng bộ dữ liệu form:", e);
+    }
+  };
+
+  const handleExecuteSandbox = (id, responseFormat) => {
+    if (!id) return;
+    setLoadingStates(prev => ({ ...prev, [id]: true }));
+    let finalResponse = { Status: "00", Message: "Giao dịch giả lập thành công." };
+    if (responseFormat) {
+      try { finalResponse = typeof responseFormat === 'string' ? JSON.parse(cleanJsonString(responseFormat)) : { ...responseFormat }; }
+      catch (e) { finalResponse = { Status: "00", Message: "Giao dịch thành công.", Data: responseFormat }; }
+    }
+    try {
+      const currentBody = JSON.parse(requestBodies[id] || '{}');
+      Object.keys(currentBody).forEach(key => {
+        if (VALIDATION_LIMITS[key] && currentBody[key] !== undefined) {
+          const validNum = clampValue(key, currentBody[key]);
+          if (key === 'TongPhi' && finalResponse.TotalFee !== undefined) finalResponse.TotalFee = validNum;
+        }
+      });
+    } catch(e) {}
+    setTimeout(() => {
+      setApiResponses(prev => ({ ...prev, [id]: finalResponse }));
+      setLoadingStates(prev => ({ ...prev, [id]: false }));
+    }, 350);
+  };
+
+  const scrollToApi = useCallback((id) => {
+    const element = apiRefs.current[id];
+    if (!element) return;
+    isClickScrolling.current = true;
+    setActiveEpId(id);
+    scrollSidebarToActive(id);
+    element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    setTimeout(() => { isClickScrolling.current = false; }, 800);
+  }, [scrollSidebarToActive]);
+
+  const highlightCodeText = (code, lang) => {
+    if (!code) return '';
+    let escaped = code
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+
+    if (lang === 'curl') {
+      escaped = escaped.replace(/(curl|--location|--method|--header|--data)/g, '<span class="text-amber-400 font-bold">$1</span>');
+      escaped = escaped.replace(/('[^']*')/g, '<span class="text-emerald-400">$1</span>');
+    } else {
+      escaped = escaped.replace(/\b(const|let|var|new|return|import|from|require|function|echo|class|public|private|false|true)\b/g, '<span class="text-purple-400 font-bold">$1</span>');
+      escaped = escaped.replace(/("[^"]*")/g, '<span class="text-emerald-400">$1</span>');
+      escaped = escaped.replace(/('[^']*')/g, '<span class="text-emerald-400">$1</span>');
+      escaped = escaped.replace(/\b(fetch|then|catch|console\.log|requests\.request|print|axios\.request)\b/g, '<span class="text-blue-400">$1</span>');
+    }
+    return <code dangerouslySetInnerHTML={{ __html: escaped }} />;
   };
 
   const renderTreeSchema = (dataObj) => {
@@ -568,42 +331,6 @@ export default function PartnerDocs() {
     });
   };
 
-  const scrollToApi = useCallback((id) => {
-    const element = apiRefs.current[id];
-    if (!element) return;
-
-    isClickScrolling.current = true;
-    setActiveEpId(id);
-    scrollSidebarToActive(id);
-
-    element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-
-    setTimeout(() => { isClickScrolling.current = false; }, 800);
-  }, [scrollSidebarToActive]);
-
-  const handleExecuteSandbox = (id, responseFormat) => {
-    if (!id) return;
-    setLoadingStates(prev => ({ ...prev, [id]: true }));
-    let finalResponse = { Status: "00", Message: "Giao dịch giả lập thành công." };
-    if (responseFormat) {
-      try { finalResponse = typeof responseFormat === 'string' ? JSON.parse(cleanJsonString(responseFormat)) : { ...responseFormat }; }
-      catch (e) { finalResponse = { Status: "00", Message: "Giao dịch thành công.", Data: responseFormat }; }
-    }
-    try {
-      const currentBody = JSON.parse(requestBodies[id] || '{}');
-      Object.keys(currentBody).forEach(key => {
-        if (VALIDATION_LIMITS[key] && currentBody[key] !== undefined) {
-          const validNum = clampValue(key, currentBody[key]);
-          if (key === 'TongPhi' && finalResponse.TotalFee !== undefined) finalResponse.TotalFee = validNum;
-        }
-      });
-    } catch(e) {}
-    setTimeout(() => {
-      setApiResponses(prev => ({ ...prev, [id]: finalResponse }));
-      setLoadingStates(prev => ({ ...prev, [id]: false }));
-    }, 350);
-  };
-
   const renderCustomPageContent = (type) => {
     if (type === "overview") {
       return (
@@ -625,12 +352,6 @@ export default function PartnerDocs() {
             <strong className="block mb-1 font-bold">📌 Lưu ý tích hợp:</strong>
             Mọi cổng payload gửi lên đều bắt buộc mã hóa định dạng UTF-8, cấu trúc JSON ứng với phương thức giao dịch POST bảo mật.
           </div>
-        </div>
-      );
-    }
-    if (type === "signature") {
-      return (
-        <div className="space-y-4 text-left">
         </div>
       );
     }
@@ -709,68 +430,66 @@ export default function PartnerDocs() {
     return null;
   };
 
+  // Trích xuất danh sách Form Field từ chuỗi JSON để sinh UI nhập liệu thông minh cho cột 3
+  const getFormFields = (jsonStr) => {
+    try {
+      const obj = JSON.parse(jsonStr || '{}');
+      return Object.entries(obj).filter(([_, v]) => typeof v !== 'object');
+    } catch (e) {
+      return [];
+    }
+  };
+
   const categories = Array.from(new Set(activeEndpoints.map(e => e.category || "CHUNG")));
-  const currentActiveEp = activeEndpoints.find(e => e.id === activeEpId) || activeEndpoints[0];
 
   return (
-    <div className="flex h-screen w-full bg-white text-slate-800 text-sm overflow-hidden select-text">
+    <div className="flex h-screen w-full bg-white text-slate-800 text-sm overflow-hidden select-text font-sans">
+      
+      {/* CỘT 1: SIDEBAR DANH MỤC TRÁI */}
+      <div ref={sidebarScrollRef} className="w-80 shrink-0 border-r border-slate-200 bg-[#f8fafc] p-4 overflow-y-auto space-y-0 text-xs select-none flex flex-col custom-scrollbar">
+        <div className="space-y-2">
+        </div>
 
-      {/* CỘT 1: SIDEBAR */}
-      <div
-        ref={sidebarScrollRef}
-        className="w-80 shrink-0 border-r border-slate-200 bg-slate-50 p-4 overflow-y-auto space-y-4 text-xs select-none flex flex-col"
-      >
-        <div className="flex-1 overflow-y-auto space-y-4 pr-1 custom-scrollbar">
+        <div className="flex-1 overflow-y-auto space-y-4 pr-1">
           {categories.map((cat, cIdx) => (
             <div key={cIdx} className="space-y-1">
-              <div className="text-slate-400 uppercase font-black tracking-wider text-[10px] pt-2 px-1 text-left">{cat}</div>
+              <div className="text-slate-400 uppercase font-extrabold tracking-wider text-[9px] pt-3 px-1 text-left">{cat}</div>
               <div className="space-y-0.5">
-                {activeEndpoints.filter(e => (e.category || "CHUNG") === cat).map((ep) => {
-                  const isSelected = activeEpId === ep.id;
-                  return (
-                    <div
-                      key={ep.id}
-                      id={`sidebar-item-${ep.id}`}
-                      onClick={() => scrollToApi(ep.id)}
-                      className={`flex items-center space-x-2 px-2.5 py-2 rounded-lg cursor-pointer transition-all ${
-                        isSelected ? 'bg-blue-600 text-white font-bold shadow-sm' : 'text-slate-600 hover:bg-slate-200/60'
-                      }`}
-                    >
-                      <span className={`text-[8px] px-1 py-0.5 rounded font-black text-white shrink-0 ${
-                        ep.method === 'POST' ? 'bg-emerald-600' : ep.method === 'INFO' || ep.method === 'DATA' ? 'bg-blue-500' : 'bg-slate-500'
-                      }`}>
-                        {ep.method}
-                      </span>
-                      <span className="truncate flex-1 font-medium text-left">{ep.description}</span>
-                    </div>
-                  );
-                })}
+                {activeEndpoints.filter(e => (e.category || "CHUNG") === cat).map((ep) => (
+                  <div
+                    key={ep.id}
+                    id={`sidebar-item-${ep.id}`}
+                    onClick={() => scrollToApi(ep.id)}
+                    className={`flex items-center space-x-2 px-2.5 py-2 rounded-xl cursor-pointer transition-all ${
+                      activeEpId === ep.id ? 'bg-blue-600 text-white font-bold shadow-sm' : 'text-slate-600 hover:bg-slate-200/60'
+                    }`}
+                  >
+                    <span className={`text-[8px] px-1.5 py-0.5 rounded font-black text-white shrink-0 ${
+                      ep.method === 'POST' ? 'bg-emerald-600' : ep.method === 'INFO' || ep.method === 'DATA' ? 'bg-blue-500' : 'bg-slate-500'
+                    }`}>
+                      {ep.method}
+                    </span>
+                    <span className="truncate flex-1 font-semibold text-left">{ep.description}</span>
+                  </div>
+                ))}
               </div>
             </div>
           ))}
         </div>
       </div>
 
-      {/* CỘT 2: MAIN CONTENT */}
-      <div
-        ref={middleScrollRef}
-        className="flex-1 p-6 overflow-y-auto space-y-24 scroll-smooth min-w-0 custom-scrollbar bg-white"
-      >
+      {/* CỘT 2: KHU VỰC THÔNG TIN SCHEMA CHI TIẾT (Ở GIỮA) */}
+      <div ref={middleScrollRef} className="flex-1 p-8 overflow-y-auto space-y-24 scroll-smooth min-w-0 custom-scrollbar bg-white">
         {activeEndpoints.map((ep) => (
-          <div
-            key={ep.id}
-            data-api-id={ep.id}
-            ref={el => apiRefs.current[ep.id] = el}
-            className="pt-4 border-b border-slate-100 pb-16 last:border-0 scroll-mt-6 max-w-full"
-          >
+          <div key={ep.id} data-api-id={ep.id} ref={el => apiRefs.current[ep.id] = el} className="pt-2 border-b border-slate-100 pb-16 last:border-0 scroll-mt-6 max-w-full">
             <div className="text-left max-w-full">
-              <span className="bg-slate-100 text-slate-600 text-[10px] uppercase font-bold tracking-widest px-2 py-0.5 rounded border border-slate-200 inline-block">
+              <span className="bg-slate-100 text-slate-600 text-[10px] uppercase font-bold tracking-widest px-2.5 py-0.5 rounded-md border border-slate-200 inline-block">
                 {ep.category}
               </span>
-              <h1 className="text-xl font-bold text-slate-900 tracking-tight mt-1 max-w-full">{ep.description}</h1>
+              <h1 className="text-xl font-extrabold text-slate-900 tracking-tight mt-1.5 max-w-full">{ep.description}</h1>
               <div className="mt-3 flex items-center space-x-2 text-xs max-w-full">
-                <span className={`text-white font-black px-2 py-1 rounded shrink-0 ${ep.method === 'POST' ? 'bg-emerald-600' : 'bg-blue-600'}`}>{ep.method}</span>
-                <code className="bg-slate-100 text-slate-700 px-3 py-1 rounded font-mono border border-slate-200 break-all flex-1 font-bold text-left">{ep.path}</code>
+                <span className={`text-white font-black px-2.5 py-1 rounded-md shrink-0 ${ep.method === 'POST' ? 'bg-emerald-600' : 'bg-blue-600'}`}>{ep.method}</span>
+                <code className="bg-slate-50 text-slate-700 px-3 py-1 rounded-xl font-mono border border-slate-200/70 break-all flex-1 font-bold text-left">{ep.path}</code>
               </div>
             </div>
 
@@ -779,15 +498,15 @@ export default function PartnerDocs() {
             ) : (
               <>
                 <div className="mt-8 space-y-3 text-left max-w-full">
-                  <h2 className="text-base font-bold text-slate-900 tracking-tight">Request Body Schema</h2>
-                  <div className="inline-block bg-orange-50 text-orange-600 text-[10px] font-bold px-2 py-0.5 rounded border border-orange-200 uppercase">application/json</div>
+                  <h2 className="text-sm font-extrabold text-slate-900 uppercase tracking-wide">Request Body Schema</h2>
+                  <div className="inline-block bg-orange-50 text-orange-600 text-[9px] font-bold px-2 py-0.5 rounded border border-orange-200 uppercase">application/json</div>
                   <div className="pl-2 border-l border-slate-200 space-y-1 pt-1 max-w-full overflow-hidden">
                     {ep.requestSample ? renderTreeSchema(ep.requestSample) : <p className="text-xs text-slate-400 italic">Không yêu cầu Body Header Parameter.</p>}
                   </div>
                 </div>
                 <div className="mt-8 space-y-4 text-left max-w-full">
-                  <h2 className="text-base font-bold text-slate-900 tracking-tight">Response JSON Format</h2>
-                  <div className="inline-block bg-orange-50 text-orange-600 text-[10px] font-bold px-2 py-0.5 rounded border border-orange-200 uppercase">application/json</div>
+                  <h2 className="text-sm font-extrabold text-slate-900 uppercase tracking-wide">Response JSON Format</h2>
+                  <div className="inline-block bg-orange-50 text-orange-600 text-[9px] font-bold px-2 py-0.5 rounded border border-orange-200 uppercase">application/json</div>
                   <div className="pl-2 border-l border-slate-200 space-y-1 pt-1 max-w-full overflow-hidden">
                     {ep.responseFormat ? renderTreeSchema(ep.responseFormat) : <p className="text-xs text-slate-400 italic">Không có phản hồi mẫu.</p>}
                   </div>
@@ -798,219 +517,208 @@ export default function PartnerDocs() {
         ))}
       </div>
 
-      {/* CỘT 3: CONSOLE SANDBOX WORKBENCH */}
-      <div className="w-96 shrink-0 bg-slate-900 text-slate-200 p-4 flex flex-col space-y-4 border-l border-slate-800 font-mono text-xs overflow-y-auto select-none min-w-0 custom-scrollbar text-left">
-        <div className="max-w-full">
-          <div className="text-[9px] uppercase text-slate-400 font-bold mb-1 tracking-wider text-left">API ĐANG CHỌN</div>
-          <div className="bg-slate-800 text-blue-400 font-bold px-2 py-1.5 rounded text-[11px] truncate text-left border border-slate-700 max-w-full">
-            🔗 {currentActiveEp?.description}
+      {/* CỘT 3: CONSOLE SANDBOX WORKBENCH & CODE SNIPPETS (TỐI ƯU GIAO DIỆN THEO ẢNH MẪU) */}
+      <div className="w-[450px] shrink-0 bg-[#ffffff] text-slate-800 p-5 flex flex-col space-y-5 border-l border-slate-200 overflow-y-auto select-none min-w-0 custom-scrollbar text-left shadow-2xl">
+        
+        {/* TỐI ƯU 1: KHU VỰC KHỐI CODE SNIPPETS ĐA NGÔN NGỮ (ĐƯỢC ĐƯA LÊN ĐẦU THEO ẢNH MẪU) */}
+        <div className="space-y-3 border border-slate-200 bg-slate-50/50 p-3 rounded-2xl">
+          <div className="flex items-center justify-between font-sans">
+            <div className="text-[11px] uppercase text-slate-700 font-extrabold tracking-wider flex items-center gap-1.5">
+              <span>🛠️</span> Code Generator Templates
+            </div>
+            <button
+              type="button"
+              onClick={async () => {
+                const currentSnippetText = generateLanguageSnippet(selectedLang, currentActiveEp, requestBodies[currentActiveEp?.id]);
+                if (currentSnippetText) {
+                  await navigator.clipboard.writeText(currentSnippetText);
+                  alert(`📋 Đã copy đoạn mã [${selectedLang.toUpperCase()}] thành công!`);
+                }
+              }}
+              className="text-[10px] px-3 py-1 rounded-xl bg-slate-900 text-white hover:bg-slate-800 transition-all cursor-pointer border-0 font-bold shadow-sm"
+            >
+              📋 Copy Code
+            </button>
+          </div>
+
+          {/* Tab bar chọn ngôn ngữ dạng viên thuốc cao cấp tròn trịa */}
+          <div className="flex items-center space-x-1 bg-[#f1f5f9] p-1 rounded-xl border border-slate-200 overflow-x-auto scrollbar-none select-none">
+            {SUPPORTED_LANGUAGES.map((lang) => (
+              <button
+                key={lang.id}
+                type="button"
+                onClick={() => setSelectedLang(lang.id)}
+                className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all border-0 cursor-pointer whitespace-nowrap ${
+                  selectedLang === lang.id
+                    ? 'bg-white text-blue-600 shadow-sm border border-slate-200'
+                    : 'text-slate-500 bg-transparent hover:text-slate-900 hover:bg-slate-200/50'
+                }`}
+              >
+                <span>{lang.icon}</span>
+                <span>{lang.name}</span>
+              </button>
+            ))}
+          </div>
+
+          {/* Khung hiển thị Code Highlight nền tối chuyên nghiệp */}
+          <div className="bg-[#0f172a] rounded-xl border border-slate-800 shadow-xl max-w-full overflow-hidden relative">
+            <div className="absolute right-2.5 top-2 text-[9px] text-slate-500 font-bold select-none uppercase tracking-wider font-sans">
+              {selectedLang}
+            </div>
+            <pre className="w-full h-40 bg-[#0f172a] text-slate-300 font-mono text-[11px] leading-relaxed p-3 border-0 overflow-y-auto select-text custom-scrollbar resize-none text-left m-0 whitespace-pre-wrap">
+              {highlightCodeText(
+                generateLanguageSnippet(selectedLang, currentActiveEp, requestBodies[currentActiveEp?.id]),
+                selectedLang
+              )}
+            </pre>
           </div>
         </div>
 
-        <div className="max-w-full">
-          <div className="text-[9px] uppercase text-slate-500 font-bold mb-1 tracking-wider text-left">SECURE PARTNER KEY</div>
-          <input
-            type="text" value={authToken} onChange={(e) => setAuthToken(e.target.value)}
-            className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-slate-300 font-mono text-xs focus:outline-none shadow-inner select-text"
-          />
-        </div>
-
-        {currentActiveEp?.isCustomPage && currentActiveEp?.pageType !== "overview" ? (
-          <div className="flex-1 flex flex-col justify-center items-center text-center p-6 border border-dashed border-slate-800 rounded-xl bg-slate-950/40 text-slate-500 font-sans">
-            <span className="text-xl mb-2">📋</span>
-            <p className="text-[11px] leading-normal">Mục thông tin tham chiếu tĩnh.<br/>Vui lòng chọn các API nghiệp vụ để trải nghiệm hệ thống Sandbox kiểm thử tự động.</p>
+        {/* TỐI ƯU 2: GIAO DIỆN TÀI LIỆU NHẬP LIỆU WORKBENCH TRỰC QUAN (GIỐNG HỆT FILE ẢNH MẪU) */}
+        <div className="border border-slate-200 rounded-2xl p-4 bg-white shadow-sm flex flex-col space-y-4 font-sans">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+            <span className="text-xs font-black uppercase text-slate-900 tracking-wide">REQUEST SYSTEM</span>
+            
+            {/* Toggle chuyển đổi nhanh giữa Giao diện nhập form UI và Soạn JSON thô */}
+            <div className="flex bg-slate-100 p-0.5 rounded-lg text-[10px] font-bold border border-slate-200">
+              <button 
+                type="button" onClick={() => setIsFormMode(true)}
+                className={`px-2 py-0.5 rounded-md cursor-pointer border-0 ${isFormMode ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 bg-transparent'}`}
+              >
+                FORM UI
+              </button>
+              <button 
+                type="button" onClick={() => setIsFormMode(false)}
+                className={`px-2 py-0.5 rounded-md cursor-pointer border-0 ${!isFormMode ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 bg-transparent'}`}
+              >
+                RAW JSON
+              </button>
+            </div>
           </div>
-        ) : (
-          <>
-            <div className="flex flex-col h-56 max-w-full">
-              <div className="text-[9px] uppercase text-slate-500 font-bold mb-1 tracking-wider flex justify-between items-center">
-                <span>REQUEST BODY SAMPLE</span>
-                <span className="text-[9px] text-amber-500 font-bold">AUTO-VALIDATED</span>
+
+          {/* Trường Base URL tĩnh */}
+          <div className="space-y-1 text-xs">
+            <div className="text-slate-500 font-bold flex items-center gap-1">
+              <span>▾</span> Base URL
+            </div>
+            <div className="text-slate-800 font-mono text-[11px] bg-slate-50 border border-slate-200 px-3 py-2 rounded-xl break-all">
+              {import.meta.env.VITE_API_URL || 'https://docs-ozw6.onrender.com'}
+            </div>
+          </div>
+
+          {/* Trường Auth Key token định danh */}
+          <div className="space-y-1 text-xs">
+            <div className="text-slate-500 font-bold flex items-center gap-1">
+              <span>▾</span> Auth (Bearer Token)
+            </div>
+            <input
+              type="text" 
+              value={authToken} 
+              onChange={(e) => setAuthToken(e.target.value)}
+              placeholder="Nhập mã bí mật pvi_secret..."
+              className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-slate-800 font-mono text-[11px] focus:outline-none focus:border-blue-500 shadow-sm select-text"
+            />
+          </div>
+
+          {/* Khối quản lý Body Parameters theo cấu hình lựa chọn */}
+          <div className="space-y-2 text-xs flex-1 flex flex-col min-h-0">
+            <div className="text-slate-500 font-bold flex items-center justify-between">
+              <span className="flex items-center gap-1">▾ Body <span className="text-[9px] bg-red-100 text-red-600 px-1 rounded font-black">REQUIRED</span></span>
+              {!isFormMode && <span className="text-[9px] text-amber-600 font-bold bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">AUTO-VALIDATE</span>}
+            </div>
+
+            {currentActiveEp?.isCustomPage && currentActiveEp?.pageType !== "overview" ? (
+              <div className="flex-1 flex flex-col justify-center items-center text-center p-4 border border-dashed border-slate-200 rounded-xl bg-slate-50 text-slate-400">
+                <p className="text-[11px] leading-normal">Trang tham chiếu tĩnh không chứa tham số yêu cầu.</p>
               </div>
+            ) : isFormMode ? (
+              /* HIỂN THỊ DẠNG FORM UI: Tự động map các trường từ object mẫu ra ô nhập tương thích (Giống ảnh b2d763) */
+              <div className="space-y-3 max-h-52 overflow-y-auto pr-1 custom-scrollbar">
+                {getFormFields(requestBodies[currentActiveEp?.id]).length === 0 ? (
+                  <p className="text-slate-400 italic text-[11px] text-center pt-4">Không tìm thấy tham số khả dụng hoặc JSON bị lỗi.</p>
+                ) : (
+                  getFormFields(requestBodies[currentActiveEp?.id]).map(([key, val]) => (
+                    <div key={key} className="space-y-1 text-left">
+                      <label className="block text-[11px] font-mono font-bold text-slate-700">{key}</label>
+                      <input
+                        type="text"
+                        value={String(val)}
+                        onChange={(e) => handleFormFieldChange(currentActiveEp?.id, key, e.target.value)}
+                        placeholder={`Nhập thông tin cho ${key}...`}
+                        className="w-full bg-slate-50/50 border border-slate-200 rounded-xl px-3 py-1.5 text-slate-800 font-mono text-[11px] focus:outline-none focus:border-blue-500 transition-all shadow-inner"
+                      />
+                    </div>
+                  ))
+                )}
+              </div>
+            ) : (
+              /* HIỂN THỊ DẠNG TEXTAREA RAW JSON THÔ (Như thiết kế ban đầu của bạn) */
               <textarea
                 value={requestBodies[currentActiveEp?.id] || '{}'}
                 onChange={(e) => handleTextareaChange(currentActiveEp?.id, e.target.value)}
-                className="w-full flex-1 bg-slate-800 border border-slate-700 rounded-lg p-3 text-emerald-400 font-mono text-[11px] leading-normal shadow-inner resize-none focus:outline-none focus:border-blue-500 overflow-y-auto select-text"
+                className="w-full h-36 bg-[#0f172a] border border-slate-800 rounded-xl p-3 text-emerald-400 font-mono text-xs leading-relaxed shadow-inner resize-none focus:outline-none focus:border-blue-500 overflow-y-auto select-text"
               />
-            </div>
+            )}
+          </div>
 
-            <button
-              onClick={() => handleExecuteSandbox(currentActiveEp?.id, currentActiveEp?.responseFormat)}
-              disabled={loadingStates[currentActiveEp?.id]}
-              className={`w-full text-white font-bold py-2.5 px-4 rounded-lg font-sans text-xs transition-all shadow-md active:scale-[0.99] flex items-center justify-center space-x-2 ${
-                loadingStates[currentActiveEp?.id] ? 'bg-blue-800/50 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-500 cursor-pointer border-0 outline-none'
-              }`}
-            >
-              {loadingStates[currentActiveEp?.id] ? (
-                <>
-                  <svg className="animate-spin h-3 w-3 text-white" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                  </svg>
-                  <span>SENDING SIMULATOR...</span>
-                </>
-              ) : (
-                <span>⚡ EXECUTE REQUEST (SANDBOX)</span>
-              )}
-            </button>
+          {/* Nút hành động Execute gửi API Sandbox lên Core PVI */}
+          <button
+            type="button"
+            onClick={() => handleExecuteSandbox(currentActiveEp?.id, currentActiveEp?.responseFormat)}
+            disabled={loadingStates[currentActiveEp?.id]}
+            className={`w-full text-white font-bold py-2.5 px-4 rounded-xl font-sans text-xs transition-all shadow active:scale-[0.99] flex items-center justify-center space-x-2 ${
+              loadingStates[currentActiveEp?.id] ? 'bg-blue-800/50 cursor-not-allowed' : 'bg-emerald-600 hover:bg-emerald-500 cursor-pointer border-0 outline-none'
+            }`}
+          >
+            {loadingStates[currentActiveEp?.id] ? (
+              <>
+                <svg className="animate-spin h-3 w-3 text-white" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                </svg>
+                <span>SENDING API REQUEST...</span>
+              </>
+            ) : (
+              <span>SEND API REQUEST</span>
+            )}
+          </button>
+        </div>
 
-            <div className="flex-1 flex flex-col min-h-[160px] max-w-full overflow-hidden">
-              <div className="text-[9px] uppercase text-slate-500 font-bold mb-1 tracking-wider text-left">RESPONSE LOGIC OBJECT</div>
-              <div className="w-full flex-1 bg-slate-950 border border-slate-800 rounded-lg p-3 text-sky-400 font-mono text-[11px] leading-normal overflow-y-auto shadow-inner text-left max-w-full break-all select-text custom-scrollbar">
-                {apiResponses[currentActiveEp?.id] ? (
-                  <pre className="max-w-full overflow-x-auto whitespace-pre-wrap m-0">{JSON.stringify(apiResponses[currentActiveEp?.id], null, 2)}</pre>
-                ) : (
-                  <span className="text-slate-600 italic">// Click nút Execute phía trên để nhận dữ liệu JSON phản hồi giả lập từ Core...</span>
-                )}
-              </div>
-            </div>
-
-            {/* KHỐI cURL EXAMPLE ĐÃ ĐƯỢC NÂNG CẤP THÀNH TEXTAREA ĐỘNG VÀ PARSER HOÀN CHỈNH */}
-            <div className="space-y-3 mt-4 pt-4 border-t border-slate-800">
-              <div className="flex items-center justify-between">
-                <div className="text-[9px] uppercase text-slate-500 font-bold tracking-wider flex items-center gap-1">
-                  <span>⚡</span> cURL Command Example & Sandbox Input
-                </div>
-                <button
-                  onClick={async () => {
-                    const curlText = requestBodies[currentActiveEp?.id + '_curl'] || generateCurlCommand(currentActiveEp);
-                    if (curlText) {
-                      await navigator.clipboard.writeText(curlText);
-                      alert("📋 Đã copy đoạn mã cURL vào bộ nhớ đệm!");
-                    }
-                  }}
-                  className="text-[10px] px-2 py-1 rounded bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white transition-all cursor-pointer border border-slate-700 font-sans font-bold"
-                >
-                  📋 Copy cURL
-                </button>
-              </div>
-              <div className="bg-slate-950 rounded-lg border border-slate-800 shadow-inner max-w-full overflow-hidden">
-                <textarea
-                  value={requestBodies[currentActiveEp?.id + '_curl'] || ''}
-                  onChange={(e) => {
-                    const inputCurl = e.target.value;
-                    
-                    // 1. Cập nhật nội dung hiển thị trong ô cURL text
-                    setRequestBodies(prev => ({
-                      ...prev,
-                      [currentActiveEp?.id + '_curl']: inputCurl
-                    }));
-
-                    // 2. Trình phân tách Parser bóc tách dữ liệu JSON để đồng bộ ngược lên Sandbox
-                    try {
-                      // Regex bắt các chuỗi JSON hợp lệ nằm sau cờ --data hoặc -d
-                      const bodyMatch = inputCurl.match(/(?:--data|-d)\s+'([\s\S]*?)'/);
-                      if (bodyMatch && bodyMatch[1]) {
-                        const cleanJson = bodyMatch[1].trim();
-                        JSON.parse(cleanJson); // Kiểm tra tính hợp lệ của định dạng JSON
-                        
-                        // Nếu đúng cú pháp JSON, cập nhật và đồng bộ thẳng lên ô REQUEST BODY SAMPLE
-                        handleTextareaChange(currentActiveEp?.id, cleanJson);
-                      }
-                    } catch (err) {
-                      // Bỏ qua lỗi nếu đối tác đang paste hoặc gõ dở chuỗi chưa chuẩn định dạng
-                    }
-                  }}
-                  className="w-full h-32 bg-slate-950 text-emerald-400 font-mono text-[11px] leading-normal p-3 resize-none border-0 focus:outline-none focus:ring-1 focus:ring-blue-500 select-text custom-scrollbar text-left"
-                  placeholder="// Đối tác có thể dán hoặc sửa mã cURL bất kỳ tại đây để đồng bộ hệ thống..."
-                />
-              </div>
-              <p className="text-[10px] text-slate-500 font-sans italic leading-normal text-left">
-                * Gợi ý: Đối tác có thể dán code cURL tùy biến của họ vào đây. Trình xử lý sẽ tự bóc tách chuỗi JSON data và đồng bộ lên khung Sandbox chạy thử nghiệm phía trên.
-              </p>
-            </div>
-          </>
-        )}
-      </div>
-
-      {/* MODAL PHÂN QUYỀN ĐỐI TÁC */}
-      {showPermissionModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fadeIn">
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-3xl w-full max-h-[85vh] flex flex-col overflow-hidden font-sans">
-            
-            <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-              <div className="text-left">
-                <h3 className="text-sm font-bold text-slate-900 uppercase tracking-tight">Mô hình phân quyền truy cập hệ thống API</h3>
-                <p className="text-[11px] text-slate-500 mt-0.5">Bật/tắt quyền truy xuất các gói tài liệu ấn chỉ bảo hiểm lõi Core PVI Đông Đô</p>
-              </div>
+        {/* TỐI ƯU 3: KHỐI CONSOLE CONSOLE LOG ĐẦU RA PHẢN HỒI RESPONSE (GIỐNG HỆT TRONG CÁC ẢNH MẪU) */}
+        <div className="border border-slate-200 rounded-2xl p-4 bg-white shadow-sm flex flex-col h-44 overflow-hidden font-sans">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-2 mb-2">
+            <span className="text-xs font-black uppercase text-slate-900 tracking-wide">RESPONSE BACKEND</span>
+            {apiResponses[currentActiveEp?.id] && (
               <button 
-                onClick={() => setShowPermissionModal(false)} 
-                className="text-slate-400 hover:text-slate-600 text-lg border-0 bg-transparent cursor-pointer outline-none"
+                type="button" 
+                onClick={() => setApiResponses(prev => ({ ...prev, [currentActiveEp?.id]: null }))}
+                className="text-[10px] text-red-500 font-bold bg-red-50 border-0 hover:bg-red-100 px-2 py-0.5 rounded cursor-pointer transition-all"
               >
-                ✕
+                CLEAR
               </button>
-            </div>
-
-            <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
-              {rawProjectData.length === 0 ? (
-                <div className="text-center py-8 text-slate-400 italic text-xs">Không tìm thấy dữ liệu cấu trúc thư mục đồng bộ động từ cơ sở dữ liệu.</div>
-              ) : (
-                rawProjectData.map((project) => (
-                  <div key={project._id} className="border border-slate-200 rounded-xl overflow-hidden shadow-sm bg-white text-left">
-                    <div className="bg-slate-50/80 px-3 py-2.5 border-b border-slate-200 flex flex-wrap justify-between items-center gap-2">
-                      <span className="font-bold text-xs text-slate-800 uppercase tracking-tight">📁 Bộ tài liệu: {project.title}</span>
-                    </div>
-
-                    <div className="divide-y divide-slate-100">
-                      {project.documents.map((doc) => (
-                        <div key={doc._id} className="p-3 bg-white space-y-2">
-                          <div className="flex flex-wrap justify-between items-center gap-2 border-b border-dashed border-slate-100 pb-1.5">
-                            <span className="text-xs font-semibold text-slate-700">📄 Mục danh mục: {doc.title}</span>
-                          </div>
-
-                          <div className="space-y-2 pl-3">
-                            {doc.endpoints.length === 0 ? (
-                              <p className="text-[11px] text-slate-400 italic">Không có cổng kết nối endpoint nào.</p>
-                            ) : (
-                              doc.endpoints.map((ep) => (
-                                <div key={ep.endpointId} className="flex flex-wrap justify-between items-center bg-slate-50/50 rounded-lg p-2 border border-slate-200/60 gap-3 text-xs">
-                                  <div className="flex items-center space-x-2 min-w-0 flex-1">
-                                    <span className="bg-emerald-600 text-white text-[8px] font-black px-1.5 py-0.5 rounded shrink-0">{ep.method}</span>
-                                    <span className="font-mono font-bold text-slate-800 text-[11px] truncate">{ep.path}</span>
-                                    <span className="text-slate-400 text-[11px] hidden sm:inline truncate">({ep.name})</span>
-                                  </div>
-
-                                  <div className="flex items-center space-x-4 shrink-0 font-medium text-[11px]">
-                                    <label className="flex items-center gap-1.5 text-slate-600 cursor-pointer">
-                                      <input 
-                                        type="checkbox" 
-                                        checked={ep.allowedPartners?.includes('pt-vifo') || false} 
-                                        onChange={() => handleTogglePermission('endpoint', ep.endpointId, 'pt-vifo', ep.allowedPartners?.includes('pt-vifo'))} 
-                                        className="w-3.5 h-3.5 text-blue-600 rounded border-slate-300 focus:ring-blue-500" 
-                                      />
-                                      VIFO
-                                    </label>
-                                    <label className="flex items-center gap-1.5 text-slate-600 cursor-pointer">
-                                      <input 
-                                        type="checkbox" 
-                                        checked={ep.allowedPartners?.includes('pt-momo') || false} 
-                                        onChange={() => handleTogglePermission('endpoint', ep.endpointId, 'pt-momo', ep.allowedPartners?.includes('pt-momo'))} 
-                                        className="w-3.5 h-3.5 text-blue-600 rounded border-slate-300 focus:ring-blue-500" 
-                                      />
-                                      MOMO
-                                    </label>
-                                  </div>
-                                </div>
-                              ))
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-            
-            <div className="p-4 border-t border-slate-200 bg-slate-50 text-right">
-              <button onClick={() => setShowPermissionModal(false)} className="bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs py-2 px-5 rounded-lg transition-all shadow cursor-pointer border-0 outline-none">
-                ĐÓNG KHUNG MÔ HÌNH
-              </button>
-            </div>
+            )}
+          </div>
+          <div className="w-full flex-1 bg-[#0f172a] border border-slate-800 rounded-xl p-3 text-sky-400 font-mono text-[11px] leading-relaxed overflow-y-auto shadow-2xl break-all select-text custom-scrollbar">
+            {apiResponses[currentActiveEp?.id] ? (
+              <pre className="max-w-full overflow-x-auto whitespace-pre-wrap m-0 text-left">{JSON.stringify(apiResponses[currentActiveEp?.id], null, 2)}</pre>
+            ) : (
+              <span className="text-slate-500 italic font-sans text-xs flex h-full items-center justify-center text-center">
+                Click the "Send API Request" button above and see the response here!
+              </span>
+            )}
           </div>
         </div>
-      )}
+
+      </div>
+
+      {/* MODAL PHÂN QUYỀN ĐỐI TÁC BIỆT LẬP */}
+      <PermissionModal 
+        isOpen={showPermissionModal}
+        onClose={() => setShowPermissionModal(false)}
+        rawProjectData={rawProjectData}
+        onTogglePermission={handleTogglePermission}
+      />
 
     </div>
   );
-}   
+}
