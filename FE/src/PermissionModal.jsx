@@ -10,41 +10,93 @@ const PARTNER_TIERS = [
   { id: 'tier-test', name: '🧪 Tài khoản Sandbox / Testing' },
 ];
 
-// Danh sách đối tác mẫu
-const MOCK_PARTNERS_LARGE = [
-  { id: 'pt-momo', name: 'Ví Điện Tử MoMo', tier: 'tier-gold', code: 'MOMO_PVI', status: 'Active' },
-  { id: 'pt-vnpay', name: 'Cổng Thanh Toán VNPay', tier: 'tier-gold', code: 'VNPAY_PVI', status: 'Active' },
-  { id: 'pt-zalopay', name: 'Ví Điện Tử ZaloPay', tier: 'tier-gold', code: 'ZALOPAY', status: 'Active' },
-  { id: 'pt-baoviet', name: 'Đại lý Bảo hiểm Tinh Nhuệ', tier: 'tier-silver', code: 'BAOVIET_DL', status: 'Active' },
-  { id: 'pt-medici', name: 'Insurtech Medici Việt Nam', tier: 'tier-insurtech', code: 'MEDICI_TECH', status: 'Pending' },
-  { id: 'pt-test01', name: 'Cá nhân Thử nghiệm 01', tier: 'tier-test', code: 'TEST_01', status: 'Suspended' },
-];
-
 export default function PermissionModal({ isOpen, onClose, rawProjectData, onTogglePermission }) {
   if (!isOpen) return null;
 
-  // State quản lý bộ lọc và tìm kiếm
+  // Đọc danh sách đối tác từ localStorage để đồng bộ với cấu trúc lưu trữ mới
+  const [localPartners, setLocalPartners] = useState(() => {
+    const saved = localStorage.getItem('PVI_PARTNERS_LIST');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        console.error("Lỗi parse đối tác:", e);
+      }
+    }
+    return [
+      { id: 'pt-momo', name: 'Ví Điện Tử MoMo', tier: 'tier-gold', code: 'momo_pvi_secure_2026', status: 'Active' },
+      { id: 'pt-vifo', name: 'VIFO', tier: 'tier-insurtech', code: 'vifo_pvi_secure_2026', status: 'Active' },
+      { id: 'pt-vnpay', name: 'Cổng Thanh Toán VNPay', tier: 'tier-gold', code: 'VNPAY_PVI', status: 'Active' },
+      { id: 'pt-zalopay', name: 'Ví Điện Tử ZaloPay', tier: 'tier-gold', code: 'ZALOPAY', status: 'Active' },
+      { id: 'pt-baoviet', name: 'Đại lý Bảo hiểm Tinh Nhuệ', tier: 'tier-silver', code: 'BAOVIET_DL', status: 'Active' },
+      { id: 'pt-medici', name: 'Insurtech Medici Việt Nam', tier: 'tier-insurtech', code: 'MEDICI_TECH', status: 'Pending' },
+      { id: 'pt-test01', name: 'Cá nhân Thử nghiệm 01', tier: 'tier-test', code: 'TEST_01', status: 'Suspended' },
+    ];
+  });
+
+  // State quản lý bộ lọc và tìm kiếm theo giao diện gốc của bạn
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTier, setSelectedTier] = useState('all');
   const [activePartnerId, setActivePartnerId] = useState('pt-momo');
   
+  // Các state form bổ sung để thêm tài khoản
+  const [newPartnerName, setNewPartnerName] = useState('');
+  const [newPartnerTier, setNewPartnerTier] = useState('tier-gold');
+  const [newPartnerCode, setNewPartnerCode] = useState('');
+
   // State quản lý Upload và Quy chuẩn file Word theo mẫu PVI
   const [uploadedFiles, setUploadedFiles] = useState([
     { name: 'HopDong_Goc_MoMo_Chua_Chuan.pdf', size: '2.4 MB', time: '10 phút trước', status: 'Đã quy chuẩn thành Word PVI_Template.docx' }
   ]);
   const [isProcessingFile, setIsProcessingFile] = useState(false);
 
-  // Tìm kiếm và lọc nhanh 1000+ đối tác
+  // HÀM XỬ LÝ THÊM ĐỐI TÁC MỚI CHUẨN LƯU LOCALSTORAGE VÀ KHÔNG CRASH
+  const handleCreatePartnerInModal = (e) => {
+    e.preventDefault();
+    if (!newPartnerName.trim()) {
+      alert("Vui lòng nhập tên đối tác!");
+      return;
+    }
+
+    const newId = `pt-${Date.now()}`;
+    const generatedCode = newPartnerCode.trim() || `${newPartnerName.toLowerCase().replace(/\s+/g, '_')}_secure_2026`;
+
+    const newPartner = {
+      id: newId,
+      name: newPartnerName.trim(),
+      tier: newPartnerTier,
+      code: generatedCode,
+      status: 'Active'
+    };
+
+    const updated = [...localPartners, newPartner];
+    setLocalPartners(updated);
+    
+    // Lưu đè thẳng vào localStorage để khi reset web không bị mất tài khoản
+    localStorage.setItem('PVI_PARTNERS_LIST', JSON.stringify(updated));
+
+    // Kích hoạt event thông báo cập nhật tự động sang PartnerDocs.jsx ngay lập tức
+    window.dispatchEvent(new Event('pvi_partners_changed'));
+
+    // Reset Form
+    setNewPartnerName('');
+    setNewPartnerCode('');
+    alert(`🎉 Đã lưu tài khoản [${newPartner.name}] vĩnh viễn vào hệ thống web!`);
+  };
+
+  // Tìm kiếm và lọc nhanh đối tác dựa trên localPartners động
   const filteredPartners = useMemo(() => {
-    return MOCK_PARTNERS_LARGE.filter(partner => {
+    return localPartners.filter(partner => {
       const matchSearch = partner.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
                           partner.code.toLowerCase().includes(searchQuery.toLowerCase());
       const matchTier = selectedTier === 'all' ? true : partner.tier === selectedTier;
       return matchSearch && matchTier;
     });
-  }, [searchQuery, selectedTier]);
+  }, [localPartners, searchQuery, selectedTier]);
 
-  const currentPartner = MOCK_PARTNERS_LARGE.find(p => p.id === activePartnerId) || MOCK_PARTNERS_LARGE[0];
+  const currentPartner = useMemo(() => {
+    return localPartners.find(p => p.id === activePartnerId) || localPartners[0] || {};
+  }, [localPartners, activePartnerId]);
 
   // Xử lý kéo thả file và quy chuẩn tài liệu về file Word mẫu của PVI
   const handleFileUpload = (e) => {
@@ -53,7 +105,6 @@ export default function PermissionModal({ isOpen, onClose, rawProjectData, onTog
 
     setIsProcessingFile(true);
 
-    // Giả lập xử lý cấu trúc file đầu vào bất kỳ và map vào template Word mặc định của PVI
     setTimeout(() => {
       const newFileObj = {
         name: files[0].name,
@@ -75,7 +126,7 @@ export default function PermissionModal({ isOpen, onClose, rawProjectData, onTog
         <div className="bg-[#0f172a] text-white p-4 flex items-center justify-between">
           <div>
             <h3 className="text-sm font-black tracking-wide uppercase flex items-center gap-2">
-              <span>🛡️</span> HỆ THỐNG QUẢN LÝ PHÂN QUYỀN API & CHUẨN HÓA HỒ SƠ — CỔNG PVI
+              <span>🛡️</span> HỆ THỐNG QUẢN LÝ PHÂN QUYỀN API & CHUẨN HÓA HỒ SƠ – CỔNG PVI
             </h3>
             <p className="text-[11px] text-slate-400 mt-0.5 font-medium">
               Giải pháp quản trị tự động hóa phân quyền theo Tier-Class và quy chuẩn tài liệu văn bản thông minh dành cho các đối tác kết nối cổng PVI.
@@ -84,7 +135,7 @@ export default function PermissionModal({ isOpen, onClose, rawProjectData, onTog
           <button 
             type="button" 
             onClick={onClose}
-            className="bg-slate-800 hover:bg-slate-700 text-slate-300 w-8 h-8 rounded-xl border-0 flex items-center justify-center font-bold text-sm cursor-pointer transition-all"
+            className="bg-slate-800 hover:bg-slate-700 text-slate-300 w-8 h-8 rounded-xl border-0 flex items-center justify-center font-bold text-sm cursor-pointer transition-all focus:outline-none"
           >
             ✕
           </button>
@@ -96,6 +147,46 @@ export default function PermissionModal({ isOpen, onClose, rawProjectData, onTog
           {/* CỘT TRÁI: BỘ LỌC HẠNG & DANH SÁCH ĐỐI TÁC */}
           <div className="w-80 shrink-0 border-r border-slate-200 bg-white p-4 flex flex-col space-y-3 min-h-0">
             
+            {/* THÊM FORM ĐỂ TIẾP NHẬN INPUT ACCOUNT ADMIN MỚI */}
+            <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+              <div className="text-[10px] font-black uppercase text-slate-600 mb-1.5 flex items-center gap-1">➕ Thêm Đối Tác Admin Mới</div>
+              <div className="space-y-1.5">
+                <input 
+                  type="text" 
+                  placeholder="Tên đối tác (Ví dụ: Momo Admin, VIFO v2)..." 
+                  value={newPartnerName}
+                  onChange={(e) => setNewPartnerName(e.target.value)}
+                  className="w-full bg-white border border-slate-200 rounded-lg px-2 py-1 text-[11px] font-medium focus:outline-none focus:border-blue-500"
+                />
+                <div className="grid grid-cols-2 gap-1">
+                  <select
+                    value={newPartnerTier}
+                    onChange={(e) => setNewPartnerTier(e.target.value)}
+                    className="bg-white border border-slate-200 rounded-lg px-1.5 py-1 text-[10px] font-bold focus:outline-none"
+                  >
+                    <option value="tier-gold">Hạng Vàng</option>
+                    <option value="tier-silver">Hạng Bạc</option>
+                    <option value="tier-insurtech">Insurtech</option>
+                    <option value="tier-test">Sandbox</option>
+                  </select>
+                  <input 
+                    type="text" 
+                    placeholder="Mã token bảo mật..." 
+                    value={newPartnerCode}
+                    onChange={(e) => setNewPartnerCode(e.target.value)}
+                    className="bg-white border border-slate-200 rounded-lg px-2 py-1 text-[10px] font-mono focus:outline-none"
+                  />
+                </div>
+                <button 
+                  type="button"
+                  onClick={handleCreatePartnerInModal}
+                  className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-1 rounded-lg border-0 text-[10px] transition-all cursor-pointer"
+                >
+                  LƯU TÀI KHOẢN VÀO HỆ THỐNG
+                </button>
+              </div>
+            </div>
+
             <div className="space-y-1">
               <label className="block text-[10px] font-black uppercase text-slate-500 tracking-wider">Lọc theo Hạng đối tác (Tier-Based)</label>
               <select 
@@ -148,7 +239,7 @@ export default function PermissionModal({ isOpen, onClose, rawProjectData, onTog
                       <span className={`text-[9px] px-1.5 py-0.2 rounded font-extrabold ${
                         partner.status === 'Active' ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' : 'bg-amber-50 text-amber-600 border border-amber-200'
                       }`}>
-                        {partner.status}
+                        {partner.status || 'Active'}
                       </span>
                     </div>
                     <div className="flex items-center justify-between font-mono text-[10px] text-slate-400 font-medium">
@@ -171,7 +262,7 @@ export default function PermissionModal({ isOpen, onClose, rawProjectData, onTog
                 <div className="text-[10px] bg-blue-100 text-blue-700 font-black px-2 py-0.5 rounded border border-blue-200 inline-block uppercase tracking-wider">
                   Đang cấu hình hệ thống
                 </div>
-                <h4 className="text-base font-extrabold text-slate-900 mt-1">{currentPartner.name} ({currentPartner.code})</h4>
+                <h4 className="text-base font-extrabold text-slate-900 mt-1">{currentPartner.name || 'Chưa chọn'} ({currentPartner.code || 'N/A'})</h4>
               </div>
               
               <div className="flex items-center space-x-2 bg-slate-50 p-2 rounded-xl border border-slate-200">
@@ -242,7 +333,7 @@ export default function PermissionModal({ isOpen, onClose, rawProjectData, onTog
               </div>
             </div>
 
-            {/* DANH SÁCH CHI TIẾT CÁC ENDPOINT */}
+            {/* DANH SÁCH CHI TIẾT CÁC ENDPOINT (GIỮ ĐÚNG GIAO DIỆN VÀ LOGIC MAPPING GỐC) */}
             <div className="bg-white border border-slate-200 p-4 rounded-2xl shadow-sm space-y-3">
               <h5 className="font-black text-slate-900 uppercase tracking-wide">
                 Tra cứu trạng thái Endpoint chi tiết
@@ -273,7 +364,7 @@ export default function PermissionModal({ isOpen, onClose, rawProjectData, onTog
                                   <input 
                                     type="checkbox"
                                     checked={isAllowed}
-                                    onChange={() => onTogglePermission('endpoint', ep.endpointId, currentPartner.id, isAllowed)}
+                                    onChange={() => onTogglePermission && onTogglePermission('endpoint', ep.endpointId, currentPartner.id, isAllowed)}
                                     className="w-3.5 h-3.5 text-blue-600 rounded border-slate-300 focus:ring-blue-500 cursor-pointer"
                                   />
                                   <span>{isAllowed ? 'Đã cấp' : 'Chưa cấp'}</span>
@@ -300,7 +391,7 @@ export default function PermissionModal({ isOpen, onClose, rawProjectData, onTog
           <button 
             type="button"
             onClick={onClose} 
-            className="bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs py-2 px-6 rounded-xl border-0 shadow-md cursor-pointer transition-all active:scale-95"
+            className="bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs py-2 px-6 rounded-xl border-0 shadow-md cursor-pointer transition-all active:scale-95 focus:outline-none"
           >
             ĐÓNG KHUNG QUẢN LÝ
           </button>
