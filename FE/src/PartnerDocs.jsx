@@ -137,7 +137,7 @@ export default function PartnerDocs() {
   };
 
   const clampValue = (fieldName, val) => {
-    const rule = VALIDATION_LIMITS[fieldName];
+    const rule = VALIDATION_LIMITLimits[fieldName];
     if (!rule) return val;
     if (val === undefined || val === null || val === '') return rule.min;
     let num = parseInt(String(val).replace(/\D/g, ''), 10);
@@ -205,7 +205,6 @@ export default function PartnerDocs() {
     }
   };
 
-  // Cập nhật giá trị từ các ô input của Form UI vào chuỗi JSON gốc
   const handleFormFieldChange = (id, key, val) => {
     try {
       const currentBody = JSON.parse(requestBodies[id] || '{}');
@@ -430,7 +429,6 @@ export default function PartnerDocs() {
     return null;
   };
 
-  // Trích xuất danh sách Form Field từ chuỗi JSON để sinh UI nhập liệu thông minh cho cột 3
   const getFormFields = (jsonStr) => {
     try {
       const obj = JSON.parse(jsonStr || '{}');
@@ -447,13 +445,12 @@ export default function PartnerDocs() {
       
       {/* CỘT 1: SIDEBAR DANH MỤC TRÁI */}
       <div ref={sidebarScrollRef} className="w-80 shrink-0 border-r border-slate-200 bg-[#f8fafc] p-4 overflow-y-auto space-y-0 text-xs select-none flex flex-col custom-scrollbar">
-        <div className="space-y-2">
-        </div>
+        
 
         <div className="flex-1 overflow-y-auto space-y-4 pr-1">
           {categories.map((cat, cIdx) => (
             <div key={cIdx} className="space-y-1">
-              <div className="text-slate-400 uppercase font-extrabold tracking-wider text-[9px] pt-3 px-1 text-left">{cat}</div>
+              <div className="text-slate-400 uppercase font-extrabold tracking-wider text-[9px] pt-1 px-1 text-left">{cat}</div>
               <div className="space-y-0.5">
                 {activeEndpoints.filter(e => (e.category || "CHUNG") === cat).map((ep) => (
                   <div
@@ -517,10 +514,10 @@ export default function PartnerDocs() {
         ))}
       </div>
 
-      {/* CỘT 3: CONSOLE SANDBOX WORKBENCH & CODE SNIPPETS (TỐI ƯU GIAO DIỆN THEO ẢNH MẪU) */}
+      {/* CỘT 3: CONSOLE SANDBOX WORKBENCH & CODE SNIPPETS */}
       <div className="w-[450px] shrink-0 bg-[#ffffff] text-slate-800 p-5 flex flex-col space-y-5 border-l border-slate-200 overflow-y-auto select-none min-w-0 custom-scrollbar text-left shadow-2xl">
         
-        {/* TỐI ƯU 1: KHU VỰC KHỐI CODE SNIPPETS ĐA NGÔN NGỮ (ĐƯỢC ĐƯA LÊN ĐẦU THEO ẢNH MẪU) */}
+        {/* KHU VỰC KHỐI CODE SNIPPETS ĐA NGÔN NGỮ */}
         <div className="space-y-3 border border-slate-200 bg-slate-50/50 p-3 rounded-2xl">
           <div className="flex items-center justify-between font-sans">
             <div className="text-[11px] uppercase text-slate-700 font-extrabold tracking-wider flex items-center gap-1.5">
@@ -541,14 +538,14 @@ export default function PartnerDocs() {
             </button>
           </div>
 
-          {/* Tab bar chọn ngôn ngữ dạng viên thuốc cao cấp tròn trịa */}
-          <div className="flex items-center space-x-1 bg-[#f1f5f9] p-1 rounded-xl border border-slate-200 overflow-x-auto scrollbar-none select-none">
+          {/* THANH CUỘN NGANG: Đã bọc w-full và dọn sạch comment lỗi */}
+          <div className="flex w-full max-w-full bg-[#f1f5f9] p-1 rounded-xl border border-slate-200 overflow-x-auto whitespace-nowrap gap-1 custom-scrollbar select-none">
             {SUPPORTED_LANGUAGES.map((lang) => (
               <button
                 key={lang.id}
                 type="button"
                 onClick={() => setSelectedLang(lang.id)}
-                className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all border-0 cursor-pointer whitespace-nowrap ${
+                className={`flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-bold transition-all border-0 cursor-pointer shrink-0 ${
                   selectedLang === lang.id
                     ? 'bg-white text-blue-600 shadow-sm border border-slate-200'
                     : 'text-slate-500 bg-transparent hover:text-slate-900 hover:bg-slate-200/50'
@@ -560,7 +557,6 @@ export default function PartnerDocs() {
             ))}
           </div>
 
-          {/* Khung hiển thị Code Highlight nền tối chuyên nghiệp */}
           <div className="bg-[#0f172a] rounded-xl border border-slate-800 shadow-xl max-w-full overflow-hidden relative">
             <div className="absolute right-2.5 top-2 text-[9px] text-slate-500 font-bold select-none uppercase tracking-wider font-sans">
               {selectedLang}
@@ -574,12 +570,11 @@ export default function PartnerDocs() {
           </div>
         </div>
 
-        {/* TỐI ƯU 2: GIAO DIỆN TÀI LIỆU NHẬP LIỆU WORKBENCH TRỰC QUAN (GIỐNG HỆT FILE ẢNH MẪU) */}
+        {/* GIAO DIỆN TÀI LIỆU NHẬP LIỆU WORKBENCH TRỰC QUAN */}
         <div className="border border-slate-200 rounded-2xl p-4 bg-white shadow-sm flex flex-col space-y-4 font-sans">
           <div className="flex items-center justify-between border-b border-slate-100 pb-2">
             <span className="text-xs font-black uppercase text-slate-900 tracking-wide">REQUEST SYSTEM</span>
             
-            {/* Toggle chuyển đổi nhanh giữa Giao diện nhập form UI và Soạn JSON thô */}
             <div className="flex bg-slate-100 p-0.5 rounded-lg text-[10px] font-bold border border-slate-200">
               <button 
                 type="button" onClick={() => setIsFormMode(true)}
@@ -596,7 +591,6 @@ export default function PartnerDocs() {
             </div>
           </div>
 
-          {/* Trường Base URL tĩnh */}
           <div className="space-y-1 text-xs">
             <div className="text-slate-500 font-bold flex items-center gap-1">
               <span>▾</span> Base URL
@@ -606,7 +600,6 @@ export default function PartnerDocs() {
             </div>
           </div>
 
-          {/* Trường Auth Key token định danh */}
           <div className="space-y-1 text-xs">
             <div className="text-slate-500 font-bold flex items-center gap-1">
               <span>▾</span> Auth (Bearer Token)
@@ -620,7 +613,6 @@ export default function PartnerDocs() {
             />
           </div>
 
-          {/* Khối quản lý Body Parameters theo cấu hình lựa chọn */}
           <div className="space-y-2 text-xs flex-1 flex flex-col min-h-0">
             <div className="text-slate-500 font-bold flex items-center justify-between">
               <span className="flex items-center gap-1">▾ Body <span className="text-[9px] bg-red-100 text-red-600 px-1 rounded font-black">REQUIRED</span></span>
@@ -632,7 +624,6 @@ export default function PartnerDocs() {
                 <p className="text-[11px] leading-normal">Trang tham chiếu tĩnh không chứa tham số yêu cầu.</p>
               </div>
             ) : isFormMode ? (
-              /* HIỂN THỊ DẠNG FORM UI: Tự động map các trường từ object mẫu ra ô nhập tương thích (Giống ảnh b2d763) */
               <div className="space-y-3 max-h-52 overflow-y-auto pr-1 custom-scrollbar">
                 {getFormFields(requestBodies[currentActiveEp?.id]).length === 0 ? (
                   <p className="text-slate-400 italic text-[11px] text-center pt-4">Không tìm thấy tham số khả dụng hoặc JSON bị lỗi.</p>
@@ -652,7 +643,6 @@ export default function PartnerDocs() {
                 )}
               </div>
             ) : (
-              /* HIỂN THỊ DẠNG TEXTAREA RAW JSON THÔ (Như thiết kế ban đầu của bạn) */
               <textarea
                 value={requestBodies[currentActiveEp?.id] || '{}'}
                 onChange={(e) => handleTextareaChange(currentActiveEp?.id, e.target.value)}
@@ -661,7 +651,6 @@ export default function PartnerDocs() {
             )}
           </div>
 
-          {/* Nút hành động Execute gửi API Sandbox lên Core PVI */}
           <button
             type="button"
             onClick={() => handleExecuteSandbox(currentActiveEp?.id, currentActiveEp?.responseFormat)}
@@ -684,7 +673,7 @@ export default function PartnerDocs() {
           </button>
         </div>
 
-        {/* TỐI ƯU 3: KHỐI CONSOLE CONSOLE LOG ĐẦU RA PHẢN HỒI RESPONSE (GIỐNG HỆT TRONG CÁC ẢNH MẪU) */}
+        {/* KHỐI CONSOLE CONSOLE LOG ĐẦU RA PHẢN HỒI RESPONSE */}
         <div className="border border-slate-200 rounded-2xl p-4 bg-white shadow-sm flex flex-col h-44 overflow-hidden font-sans">
           <div className="flex items-center justify-between border-b border-slate-100 pb-2 mb-2">
             <span className="text-xs font-black uppercase text-slate-900 tracking-wide">RESPONSE BACKEND</span>
