@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import Login from './Login';
 import AdminDashboard from './AdminDashboard';
 import AdminPermissions from './AdminPermissions';
-import PartnerDocs from './PartnerDocs';
+import PartnerDocs from './partnerDocs/PartnerDocs';
 import './index.css';
 
 export default function App() {
@@ -77,7 +77,7 @@ export default function App() {
 
   if (!user) return <Login onLoginSuccess={handleLoginSuccess} />;
 
-  const filteredEndpoints = endpoints; // Giữ nguyên logic lọc nếu có
+  const filteredEndpoints = endpoints;
 
  return (
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans select-none antialiased">
@@ -86,9 +86,9 @@ export default function App() {
         <div onClick={() => handleNavigate('portal')} className="flex items-center space-x-2 cursor-pointer group select-none">
           <div className="flex justify-center mb-0">
             <img 
-              src="/favicon.ico" // hoặc đường dẫn logo của bạn
+              src="/favicon.ico" 
               alt="PVI Portal" 
-              className="w-6 h-6" // chỉnh con số này: w-8, w-10, w-12, w-16...
+              className="w-6 h-6" 
             />
           </div>
           <span className="font-bold tracking-wider text-lg transition-colors group-hover:text-blue-400 duration-200">PVI PORTAL</span>
@@ -115,9 +115,7 @@ export default function App() {
                   <button type="button" onClick={() => handleNavigate('dashboard')} className="w-full text-left px-4 py-2 flex items-center space-x-2 hover:bg-slate-50 transition text-blue-700 font-semibold">
                     <span>📊</span> <span>Bảng điều khiển (Dashboard)</span>
                   </button>
-                  <button type="button" onClick={() => handleNavigate('permissions')} className="w-full text-left px-4 py-2 flex items-center space-x-2 hover:bg-slate-50 transition text-blue-700 font-semibold">
-                    <span>🔐</span> <span>Quản lý quyền & API</span>
-                  </button>
+                  
                 </div>
               )}
 
@@ -129,6 +127,7 @@ export default function App() {
         </div>
       </header>
 
+      {/* CHỈ ĐIỀU CHỈNH LOGIC ĐỊNH TUYẾN PHÍA DƯỚI ĐỂ ĐẨY VÀO TRANG DASHBOARD TẬP TRUNG */}
       <div className="flex-1 pt-14 flex flex-col relative z-10">
         {isPageLoading ? (
           <div className="flex-1 bg-white p-8 flex flex-col justify-center items-center space-y-3">
@@ -138,8 +137,12 @@ export default function App() {
         ) : (
           <>
             {viewMode === 'portal' && <PartnerDocs endpoints={filteredEndpoints} />}
-            {viewMode === 'dashboard' && user.role === 'admin' && <AdminDashboard endpoints={endpoints} />}
-            {viewMode === 'permissions' && user.role === 'admin' && <AdminPermissions endpoints={endpoints} setEndpoints={setEndpoints} />}
+            {viewMode === 'dashboard' && user.role === 'admin' && (
+              <AdminDashboard endpoints={endpoints} setEndpoints={setEndpoints} initialTab="accounts" />
+            )}
+            {viewMode === 'permissions' && user.role === 'admin' && (
+              <AdminDashboard endpoints={endpoints} setEndpoints={setEndpoints} initialTab="permissions" />
+            )}
           </>
         )}
       </div>

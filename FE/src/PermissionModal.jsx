@@ -120,7 +120,7 @@ export default function PermissionModal({ isOpen, onClose, rawProjectData, onTog
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 font-sans text-slate-800 text-xs select-text">
-      <div className="bg-white w-full max-w-6xl h-[85vh] rounded-3xl shadow-2xl flex flex-col overflow-hidden border border-slate-200 animate-in fade-in zoom-in-95 duration-200 text-left">
+      <div className="bg-white w-full max-w-7xl h-[90vh] rounded-3xl shadow-2xl flex flex-col overflow-hidden border border-slate-200 animate-in fade-in zoom-in-95 duration-200 text-left">
         
         {/* HEADER CỦA KHUNG QUẢN LÝ - ĐÃ ĐỔI TÊN THÀNH PVI */}
         <div className="bg-[#0f172a] text-white p-4 flex items-center justify-between">
@@ -188,7 +188,7 @@ export default function PermissionModal({ isOpen, onClose, rawProjectData, onTog
             </div>
 
             <div className="space-y-1">
-              <label className="block text-[10px] font-black uppercase text-slate-500 tracking-wider">Lọc theo Hạng đối tác (Tier-Based)</label>
+              <label className="block text-[10px] font-black uppercase text-slate-500 tracking-wider">Lọc nhanh đối tác hỗ trợ</label>
               <select 
                 value={selectedTier}
                 onChange={(e) => setSelectedTier(e.target.value)}
@@ -216,7 +216,7 @@ export default function PermissionModal({ isOpen, onClose, rawProjectData, onTog
 
             <div className="flex-1 overflow-y-auto space-y-1 pr-1 custom-scrollbar">
               <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pb-1 pl-1">
-                Kết quả lọc ({filteredPartners.length} đối tác)
+                Tổng danh mục ({filteredPartners.length} đối tác)
               </div>
               
               {filteredPartners.length === 0 ? (
@@ -260,19 +260,19 @@ export default function PermissionModal({ isOpen, onClose, rawProjectData, onTog
             <div className="bg-white border border-slate-200 p-4 rounded-2xl shadow-sm flex flex-wrap items-center justify-between gap-4">
               <div>
                 <div className="text-[10px] bg-blue-100 text-blue-700 font-black px-2 py-0.5 rounded border border-blue-200 inline-block uppercase tracking-wider">
-                  Đang cấu hình hệ thống
+                  Tổng quan đối tác đang xem lịch sử
                 </div>
                 <h4 className="text-base font-extrabold text-slate-900 mt-1">{currentPartner.name || 'Chưa chọn'} ({currentPartner.code || 'N/A'})</h4>
               </div>
               
               <div className="flex items-center space-x-2 bg-slate-50 p-2 rounded-xl border border-slate-200">
-                <span className="font-bold text-slate-600">Áp dụng quyền nhanh:</span>
+                <span className="font-bold text-slate-600">Thao tác nhanh:</span>
                 <button 
                   type="button"
-                  onClick={() => alert(`⚡ Đã tự động đồng bộ & kích hoạt toàn bộ nhóm API mặc định cho ${currentPartner.name} thành công!`)}
+                  onClick={() => alert(`⚡ Tính năng đồng bộ tự động hàng loạt đang được tối ưu hóa cho cấu trúc phân quyền Select-List mới!`)}
                   className="bg-blue-600 hover:bg-blue-500 text-white font-bold px-3 py-1.5 rounded-lg cursor-pointer border-0 shadow-sm transition-all"
                 >
-                  ⚡ Đồng bộ theo Nhóm quyền mặc định
+                  ⚙️ Kiểm tra tính toàn vẹn phân quyền
                 </button>
               </div>
             </div>
@@ -333,42 +333,104 @@ export default function PermissionModal({ isOpen, onClose, rawProjectData, onTog
               </div>
             </div>
 
-            {/* DANH SÁCH CHI TIẾT CÁC ENDPOINT (GIỮ ĐÚNG GIAO DIỆN VÀ LOGIC MAPPING GỐC) */}
+            {/* DANH SÁCH CHI TIẾT CÁC ENDPOINT ĐÃ SỬA ĐỔI THÀNH DANH SÁCH CHỌN ĐỐI TÁC ĐỘNG (SELECT LIST) */}
             <div className="bg-white border border-slate-200 p-4 rounded-2xl shadow-sm space-y-3">
-              <h5 className="font-black text-slate-900 uppercase tracking-wide">
-                Tra cứu trạng thái Endpoint chi tiết
-              </h5>
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-2">
+                <div>
+                  <h5 className="font-black text-slate-900 uppercase tracking-wide">
+                    Quản lý và cấp quyền API Gateway theo List Select Đối Tác
+                  </h5>
+                  <p className="text-[11px] text-slate-500 font-medium mt-0.5">
+                    Hỗ trợ tìm và chọn trực tiếp đối tác cần cấp quyền thông qua danh sách thả xuống chuyên dụng. Không giới hạn số lượng đối tác đồng thời.
+                  </p>
+                </div>
+              </div>
               
-              <div className="divide-y divide-slate-100 border border-slate-200 rounded-xl overflow-hidden bg-white max-h-60 overflow-y-auto custom-scrollbar">
+              <div className="divide-y divide-slate-100 border border-slate-200 rounded-xl overflow-hidden bg-white max-h-96 overflow-y-auto custom-scrollbar">
                 {rawProjectData && rawProjectData.length > 0 ? (
                   rawProjectData.map((project) => (
-                    <div key={project.id} className="p-3 bg-slate-50/50">
-                      <div className="font-bold text-slate-900 text-[11px] mb-2 uppercase tracking-wide bg-slate-200/60 px-2 py-0.5 inline-block rounded">
-                        📂 {project.title || 'Dự án chính'}
+                    <div key={project.id} className="p-4 bg-slate-50/40">
+                      <div className="font-bold text-slate-900 text-[11px] mb-3 uppercase tracking-wide bg-slate-200/80 px-2.5 py-1 inline-block rounded-lg border border-slate-300/40">
+                        📂 Dự án: {project.title || 'Dự án chính'}
                       </div>
                       
                       {project.documents?.map((doc) => (
-                        <div key={doc.id} className="pl-2 mt-1 space-y-1.5">
+                        <div key={doc.id} className="pl-2 mt-1 space-y-3">
                           {doc.endpoints?.map((ep) => {
-                            const isAllowed = ep.allowedPartners?.includes(currentPartner.id) || false;
+                            // Lấy ra danh sách các đối tác ĐÃ ĐƯỢC CẤP QUYỀN cho endpoint này
+                            const allowedPartnersList = localPartners.filter(p => ep.allowedPartners?.includes(p.id));
+                            
                             return (
-                              <div key={ep.endpointId} className="flex items-center justify-between bg-white p-2 rounded-lg border border-slate-200/60 hover:shadow-inner transition-all">
-                                <div className="flex items-center space-x-2 truncate">
-                                  <span className={`text-[8px] font-black text-white px-1.5 py-0.2 rounded ${ep.method === 'POST' ? 'bg-emerald-600' : 'bg-blue-500'}`}>
-                                    {ep.method}
-                                  </span>
-                                  <span className="font-mono text-slate-700 font-medium truncate">{ep.path}</span>
-                                  <span className="text-slate-400 hidden sm:inline">— {ep.name}</span>
+                              <div key={ep.endpointId} className="flex flex-col md:flex-row md:items-center justify-between bg-white p-3 rounded-xl border border-slate-200 shadow-sm hover:shadow transition-all gap-3">
+                                
+                                {/* Thông tin chi tiết của Endpoint */}
+                                <div className="space-y-1 min-w-0 max-w-md">
+                                  <div className="flex items-center space-x-2 flex-wrap gap-y-1">
+                                    <span className={`text-[9px] font-black text-white px-2 py-0.5 rounded ${ep.method === 'POST' ? 'bg-emerald-600' : 'bg-blue-500'}`}>
+                                      {ep.method}
+                                    </span>
+                                    <span className="font-mono text-slate-800 font-bold truncate text-[11px] bg-slate-100 px-1.5 py-0.2 rounded border border-slate-200">{ep.path}</span>
+                                  </div>
+                                  <div className="text-slate-500 font-semibold text-[11px] truncate">
+                                    📌 {ep.name}
+                                  </div>
                                 </div>
-                                <label className="flex items-center space-x-1 font-bold text-slate-600 cursor-pointer shrink-0 select-none">
-                                  <input 
-                                    type="checkbox"
-                                    checked={isAllowed}
-                                    onChange={() => onTogglePermission && onTogglePermission('endpoint', ep.endpointId, currentPartner.id, isAllowed)}
-                                    className="w-3.5 h-3.5 text-blue-600 rounded border-slate-300 focus:ring-blue-500 cursor-pointer"
-                                  />
-                                  <span>{isAllowed ? 'Đã cấp' : 'Chưa cấp'}</span>
-                                </label>
+
+                                {/* KHU VỰC LIST SELECT ĐỐI TÁC THAY THẾ CHO CHECKBOX TRUYỀN THỐNG */}
+                                <div className="flex-1 flex flex-wrap items-center justify-end gap-2 min-w-0">
+                                  
+                                  {/* Hiển thị các đối tác dưới dạng Badge thông minh có nút Xóa nhanh */}
+                                  <div className="flex flex-wrap gap-1 max-w-full overflow-hidden">
+                                    {allowedPartnersList.length === 0 ? (
+                                      <span className="text-[10px] text-slate-400 italic font-medium bg-slate-50 border border-slate-200/60 px-2 py-0.5 rounded-lg">🔒 Chưa có đối tác nào được quyền truy cập</span>
+                                    ) : (
+                                      allowedPartnersList.map(partner => (
+                                        <div 
+                                          key={partner.id} 
+                                          className="inline-flex items-center bg-blue-50 text-blue-700 font-bold border border-blue-200 px-2 py-0.5 rounded-lg text-[10px] gap-1"
+                                        >
+                                          <span>{partner.name}</span>
+                                          <button
+                                            type="button"
+                                            title={`Hủy quyền của ${partner.name}`}
+                                            onClick={() => onTogglePermission && onTogglePermission('endpoint', ep.endpointId, partner.id, true)}
+                                            className="text-blue-500 hover:text-red-500 font-bold border-0 bg-transparent cursor-pointer ml-0.5 text-[9px] focus:outline-none"
+                                          >
+                                            ✕
+                                          </button>
+                                        </div>
+                                      ))
+                                    )}
+                                  </div>
+
+                                  {/* Select List chọn đối tác để thêm quyền động */}
+                                  <div className="shrink-0">
+                                    <select
+                                      value=""
+                                      onChange={(e) => {
+                                        const selectedId = e.target.value;
+                                        if (selectedId) {
+                                          // Thực hiện cấp quyền (truyền currentStatus = false để hàm gốc hiểu là cần add)
+                                          onTogglePermission && onTogglePermission('endpoint', ep.endpointId, selectedId, false);
+                                        }
+                                      }}
+                                      className="bg-slate-900 text-white font-bold border border-slate-800 rounded-xl px-2.5 py-1 text-[11px] focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer shadow-sm hover:bg-slate-800 transition-colors"
+                                    >
+                                      <option value="" disabled hidden>+ Cấp quyền đối tác...</option>
+                                      {localPartners.map(p => {
+                                        const isAlreadyAllowed = ep.allowedPartners?.includes(p.id);
+                                        if (isAlreadyAllowed) return null; // Ẩn đối tác đã có quyền rồi
+                                        return (
+                                          <option key={p.id} value={p.id}>
+                                            {p.name} ({p.code})
+                                          </option>
+                                        );
+                                      })}
+                                    </select>
+                                  </div>
+
+                                </div>
+
                               </div>
                             );
                           })}
@@ -377,7 +439,7 @@ export default function PermissionModal({ isOpen, onClose, rawProjectData, onTog
                     </div>
                   ))
                 ) : (
-                  <p className="text-center py-4 text-slate-400 italic">Dữ liệu API Endpoints đang được tải...</p>
+                  <p className="text-center py-6 text-slate-400 italic font-medium">Dữ liệu danh mục API Endpoints đang được tải...</p>
                 )}
               </div>
             </div>

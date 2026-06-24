@@ -125,7 +125,7 @@ export const DEFAULT_ENDPOINTS = [
     method: "POST",
     path: "/api/pvi/v1/einvoice/issue",
     description: "Yêu cầu phát hành hóa đơn tài chính GTGT điện tử",
-    requestSample: { CpId: "PARTNER_ANBIEN_2026", so_gcn: "GCN/OTO/2026/001", MaSoThue: "0101234567", TenDonVi: "Công ty TNHH An Biên", DiaChiHoaDon: "Quận 1, TP. HCM" },
+    requestSample: { CpId: "PARTNER_ANBIEN_2026", so_gcn: "GCN/OTO/2026/001", MaSoThue: "0101234567", TenDonVi: "Công ty TNHH A", DiaChiHoaDon: "Quận 1, TP. HCM" },
     responseFormat: { Status: "00", Message: "Phát hành hóa đơn thành công", MaSoBaoMat: "INV-99281-2026", LinkHoaDon: "https://einvoice.pvi.com.vn/view/inv-99281" }
   },
   {
