@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-
-const BASE_URL = (import.meta.env.VITE_API_URL || 'https://docs-ozw6.onrender.com').replace(/\/$/, '');
+import { getAccounts } from './services/localStorageService';
 
 export default function Login({ onLoginSuccess }) {
   const [email, setEmail] = useState('');
@@ -10,87 +9,30 @@ export default function Login({ onLoginSuccess }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(''); 
+    setError('');
 
-    // =========================================================================
-    // 1. ĐỊNH NGHĨA DANH SÁCH GỐC (ĐỂ BÙ MẬT KHẨU NẾU LOCALSTORAGE BỊ XUNG ĐỘT CŨ)
-    // =========================================================================
-    const defaultAccounts = [
-      { email: "admin.pvi@pvi.com.vn", password: "admin", role: "admin", status: "Active" },
-      { email: "momo.integration@pvi.com.vn", password: "123", role: "partner", status: "Active" },
-      { email: "vifo.tech@pvi.com.vn", password: "123", role: "partner", status: "Active" },
-      { email: "zalopay.portal@pvi.com.vn", password: "123", role: "partner", status: "Inactive" }
-    ];
-
-    // Đọc pool tài khoản đang có
-    const savedAccounts = localStorage.getItem('pvi_accounts_list');
-    const accountsPool = savedAccounts ? JSON.parse(savedAccounts) : defaultAccounts;
-
-    // =========================================================================
-    // 2. KIỂM TRA TÀI KHOẢN (ĐÃ THÊM .trim() CHỐNG DẤU CÁCH THỪA)
-    // =========================================================================
-    const matchedUser = accountsPool.find(acc => {
-      const storedEmail = (acc.email || '').trim().toLowerCase();
-      const inputEmail = email.trim().toLowerCase();
-      
-      // Khắc phục lỗi dữ liệu cũ thiếu trường password trong bộ nhớ trình duyệt
-      let storedPassword = acc.password;
-      if (!storedPassword) {
-        const fallback = defaultAccounts.find(d => d.email.toLowerCase() === storedEmail);
-        storedPassword = fallback ? fallback.password : '';
-      }
-
-      return storedEmail === inputEmail && String(storedPassword).trim() === password.trim();
-    });
+    const accounts = getAccounts();
+    const matchedUser = accounts.find(acc => 
+      acc.email.trim().toLowerCase() === email.trim().toLowerCase() && 
+      String(acc.password).trim() === password.trim()
+    );
 
     if (matchedUser) {
       if (matchedUser.status === 'Inactive' || matchedUser.status === 'Đã khóa') {
         setError('Tài khoản này hiện đang bị khóa tạm thời bởi Admin!');
         return;
       }
-
       const localAuthData = {
         token: `local_pvi_token_${matchedUser.role}_${Date.now()}`,
         email: matchedUser.email,
-        role: matchedUser.role, 
+        role: matchedUser.role === 'ADMIN' ? 'admin' : 'partner',
         name: matchedUser.email.split('@')[0].toUpperCase()
       };
-
       localStorage.setItem('token', localAuthData.token);
+      localStorage.setItem('user_info', JSON.stringify(localAuthData));
       onLoginSuccess(localAuthData);
-      return; 
-    }
-
-    // =========================================================================
-    // 3. FALLBACK: GỢI API BACKEND (Nếu local không có thì đẩy lên Server như cũ)
-    // =========================================================================
-    if (!BASE_URL) {
-      setError('Lỗi hệ thống: Chưa cấu hình địa chỉ API (VITE_API_URL).');
-      return;
-    }
-
-    try {
-      const res = await fetch(`${BASE_URL}/api/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email.trim(), password: password.trim() })
-      });
-
-      const contentType = res.headers.get("content-type");
-      let data = {};
-      if (contentType && contentType.includes("application/json")) {
-        data = await res.json();
-      }
-
-      if (res.ok) {
-        localStorage.setItem('token', data.token);
-        onLoginSuccess(data);
-      } else {
-        setError(data.message || `Đăng nhập thất bại (Mã lỗi: ${res.status})`);
-      }
-    } catch (err) {
-      console.error('API Error:', err);
-      setError('Không thể kết nối đến server backend. Vui lòng kiểm tra lại mạng hoặc server.');
+    } else {
+      setError('Email hoặc mật khẩu không chính xác');
     }
   };
 
@@ -121,17 +63,16 @@ export default function Login({ onLoginSuccess }) {
           </div>
         )}
         
-        <div className="space-y-5 text-left">
+        <div className="relative">
           <div>
             <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-1.5">
-              Email đối tác
+              Email 
             </label>
-            <input 
-              type="email" 
-              value={email} 
-              onChange={e => setEmail(e.target.value)} 
-              className="w-full bg-slate-50 border border-slate-200 text-slate-900 p-3 pl-4 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none transition-all placeholder-slate-400 text-sm"
-              placeholder="name@pvi.com"
+           <input 
+               type="email" 
+               value={email} 
+               onChange={e => setEmail(e.target.value)} 
+               className="w-full bg-slate-50 border border-slate-200 text-slate-900 p-3 px-4 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none transition-all placeholder-slate-400 text-sm"
               required 
             />
           </div>
@@ -145,7 +86,7 @@ export default function Login({ onLoginSuccess }) {
               value={password} 
               onChange={e => setPassword(e.target.value)} 
               className="w-full bg-slate-50 border border-slate-200 text-slate-900 p-3 pl-4 pr-10 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none transition-all placeholder-slate-400 text-sm"
-              placeholder="••••••••"
+              
               required 
             />
             

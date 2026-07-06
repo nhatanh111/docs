@@ -1,23 +1,10 @@
-import React, { useState } from 'react';
-
-const API_BASE = import.meta.env.VITE_API_URL || 'https://docs-ozw6.onrender.com';
-
-const fetchWithAuth = async (url, options = {}) => {
-  const token = localStorage.getItem('token');
-  const res = await fetch(`${API_BASE}${url}`, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token && { 'Authorization': `Bearer ${token}` }),
-      ...options.headers,
-    },
-  });
-  if (!res.ok) {
-    const error = await res.json().catch(() => ({ message: 'Lỗi kết nối' }));
-    throw new Error(error.message || 'Lỗi không xác định');
-  }
-  return res.json();
-};
+import React, { useState, useEffect } from 'react';
+import {
+  addPartner as addPartnerService,
+  updatePartner as updatePartnerService,
+  deletePartner as deletePartnerService,
+  getPermissionProfiles
+} from './services/localStorageService';
 
 function PartnerModal({ isOpen, mode, currentPartner, setCurrentPartner, onSave, onClose, partners, accounts }) {
   if (!isOpen) return null;
@@ -29,10 +16,17 @@ function PartnerModal({ isOpen, mode, currentPartner, setCurrentPartner, onSave,
   };
 
   const getPartnerAccount = (accountId) => accounts.find(a => a.id === accountId);
+
+  // Accounts chưa được dùng bởi partner khác (trừ partner đang edit)
   const getAvailableAccounts = () => {
-    const usedAccountIds = partners.map(p => p.accountId).filter(id => id !== null);
+    const usedAccountIds = partners
+      .filter(p => p.id !== currentPartner.id)
+      .map(p => p.accountId)
+      .filter(id => id !== null);
     return accounts.filter(a => a.role === 'ĐỐI TÁC' && !usedAccountIds.includes(a.id));
   };
+
+  const linkedAccount = getPartnerAccount(currentPartner.accountId);
 
   return (
     <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50 p-4">
@@ -40,19 +34,22 @@ function PartnerModal({ isOpen, mode, currentPartner, setCurrentPartner, onSave,
         <div className="p-5 border-b border-slate-100 flex justify-between items-center">
           <div>
             <h3 className="font-bold text-slate-800">{mode === 'add' ? 'Thêm đối tác' : 'Cập nhật đối tác'}</h3>
-            <p className="text-slate-400 text-xs">{mode === 'add' ? 'Khai báo thông tin đối tác' : 'Chỉnh sửa thông tin'}</p>
+            <p className="text-slate-400 text-xs">{mode === 'add' ? 'Khai báo thông tin đối tác mới' : 'Chỉnh sửa thông tin đối tác'}</p>
           </div>
           <button onClick={onClose} className="text-slate-400 hover:text-slate-600 bg-transparent border-0 cursor-pointer text-lg">✕</button>
         </div>
         <form onSubmit={onSave} className="p-5 space-y-4">
+
+          {/* Mã số đối tác (auto) */}
           <div>
             <label className="text-[10px] font-bold text-slate-500 uppercase block mb-1">Mã số đối tác</label>
             <div className="bg-blue-50 border border-blue-200 rounded-lg px-3.5 py-2.5 text-sm font-bold text-blue-700">
-              {formatId(currentPartner.id)}
+              {mode === 'add' ? '(Tự động tạo)' : formatId(currentPartner.id)}
             </div>
             <p className="text-[9px] text-slate-400 mt-1">Hệ thống tự động đánh theo thứ tự</p>
           </div>
 
+          {/* Tên đối tác */}
           <div>
             <label className="text-[10px] font-bold text-slate-500 uppercase block mb-1">Tên đối tác *</label>
             <input
@@ -63,6 +60,7 @@ function PartnerModal({ isOpen, mode, currentPartner, setCurrentPartner, onSave,
             />
           </div>
 
+          {/* Mã API */}
           <div>
             <label className="text-[10px] font-bold text-slate-500 uppercase block mb-1">Mã API *</label>
             <input
@@ -73,6 +71,7 @@ function PartnerModal({ isOpen, mode, currentPartner, setCurrentPartner, onSave,
             />
           </div>
 
+          {/* Tài khoản liên kết */}
           <div>
             <label className="text-[10px] font-bold text-slate-500 uppercase block mb-1">Tài khoản liên kết</label>
             <select
@@ -81,16 +80,23 @@ function PartnerModal({ isOpen, mode, currentPartner, setCurrentPartner, onSave,
               className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3.5 py-2 text-sm font-medium text-slate-700 cursor-pointer outline-none focus:border-blue-400"
             >
               <option value="">-- Chọn tài khoản --</option>
-              {mode === 'edit' && currentPartner.accountId && (
-                <option value={currentPartner.accountId}>✓ {getPartnerAccount(currentPartner.accountId)?.email}</option>
-              )}
               {getAvailableAccounts().map(acc => (
                 <option key={acc.id} value={acc.id}>{acc.email}</option>
               ))}
             </select>
-            <p className="text-[9px] text-slate-400 mt-1">Chọn tài khoản đối tác để liên kết</p>
+            {linkedAccount && (
+              <div className="mt-1.5 flex items-center gap-1.5 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-1.5">
+                <svg className="w-3.5 h-3.5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                <span className="text-[11px] text-emerald-700 font-semibold">{linkedAccount.email}</span>
+                <span className="text-[9px] text-emerald-500 ml-auto">Đang liên kết</span>
+              </div>
+            )}
+            <p className="text-[9px] text-slate-400 mt-1">Chỉ hiển thị tài khoản role "ĐỐI TÁC" chưa được dùng</p>
           </div>
 
+          {/* Trạng thái */}
           <div>
             <label className="text-[10px] font-bold text-slate-500 uppercase block mb-1">Trạng thái</label>
             <div className="flex items-center gap-4">
@@ -118,9 +124,14 @@ function PartnerModal({ isOpen, mode, currentPartner, setCurrentPartner, onSave,
 export default function PartnersTab({ partners, setPartners, accounts }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState('add');
+  const [profiles, setProfiles] = useState([]);
   const [currentPartner, setCurrentPartner] = useState({
-    id: null, name: '', clientId: '', status: 'active', accountId: null
+    id: null, name: '', clientId: '', status: 'active', accountId: null, profileIds: []
   });
+
+  useEffect(() => {
+    setProfiles(getPermissionProfiles());
+  }, [isModalOpen]); // Reload profiles when modal toggles
 
   const formatId = (id) => {
     if (!id) return '---';
@@ -132,7 +143,7 @@ export default function PartnersTab({ partners, setPartners, accounts }) {
 
   const openAdd = () => {
     setModalMode('add');
-    setCurrentPartner({ id: null, name: '', clientId: '', status: 'active', accountId: null });
+    setCurrentPartner({ id: null, name: '', clientId: '', status: 'active', accountId: null, profileIds: [] });
     setIsModalOpen(true);
   };
 
@@ -142,35 +153,28 @@ export default function PartnersTab({ partners, setPartners, accounts }) {
     setIsModalOpen(true);
   };
 
-  const savePartner = async (e) => {
+  const savePartner = (e) => {
     e.preventDefault();
     try {
       if (modalMode === 'add') {
-        const newPartner = await fetchWithAuth('/api/admin/partners', {
-          method: 'POST',
-          body: JSON.stringify(currentPartner),
-        });
-        setPartners([...partners, newPartner]);
-        alert(`✅ Đối tác "${newPartner.name}" đã được tạo với mã số ${formatId(newPartner.id)}!`);
+        const newPartner = addPartnerService(currentPartner);
+        setPartners(prev => [...prev, newPartner]);
+        setIsModalOpen(false);
       } else {
-        const updated = await fetchWithAuth(`/api/admin/partners/${currentPartner.id}`, {
-          method: 'PUT',
-          body: JSON.stringify(currentPartner),
-        });
-        setPartners(partners.map(p => p.id === updated.id ? updated : p));
-        alert('✅ Cập nhật thành công!');
+        const updated = updatePartnerService(currentPartner.id, currentPartner);
+        setPartners(prev => prev.map(p => p.id === updated.id ? updated : p));
+        setIsModalOpen(false);
       }
-      setIsModalOpen(false);
     } catch (error) {
       alert('❌ Lỗi: ' + error.message);
     }
   };
 
-  const deletePartner = async (id) => {
+  const handleDelete = (id) => {
     if (!window.confirm('Xóa đối tác này?')) return;
     try {
-      await fetchWithAuth(`/api/admin/partners/${id}`, { method: 'DELETE' });
-      setPartners(partners.filter(p => p.id !== id));
+      deletePartnerService(id);
+      setPartners(prev => prev.filter(p => p.id !== id));
     } catch (error) {
       alert('❌ Lỗi xóa: ' + error.message);
     }
@@ -204,29 +208,44 @@ export default function PartnersTab({ partners, setPartners, accounts }) {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="font-bold text-slate-800">{p.name}</span>
+                      <span className="text-slate-300 text-xs">#{formatId(p.id)}</span>
                       <span className={`px-2 py-0.5 rounded-full font-semibold text-[9px] ${
                         p.status === 'active' ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' : 'bg-rose-50 text-rose-700 border border-rose-100'
                       }`}>
                         {p.status === 'active' ? '● Hoạt động' : '○ Đã khóa'}
                       </span>
                     </div>
-                    <div className="flex items-center gap-3 text-xs mt-0.5">
-                      <span className="text-slate-400">API:</span>
-                      <span className="font-mono font-bold text-slate-700 bg-slate-50 border border-slate-200 px-2 py-0.5 rounded text-[10px]">{p.clientId}</span>
-                      {account && (
-                        <span className="flex items-center gap-1 text-emerald-600 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-lg text-[10px]">
+
+                    <div className="flex items-center gap-3 flex-wrap text-xs mt-1">
+                      {/* Mã API */}
+                      <span className="flex items-center gap-1">
+                        <span className="text-slate-400">API:</span>
+                        <span className="font-mono font-bold text-slate-700 bg-slate-50 border border-slate-200 px-2 py-0.5 rounded text-[10px]">{p.clientId}</span>
+                      </span>
+
+                      {/* Tài khoản liên kết */}
+                      {account ? (
+                        <span className="flex items-center gap-1 text-emerald-700 bg-emerald-50 border border-emerald-100 px-2.5 py-0.5 rounded-lg text-[10px] font-semibold">
                           <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                           </svg>
-                          <span className="font-medium truncate max-w-[140px]">{account.email}</span>
+                          {account.email}
+                        </span>
+                      ) : (
+                        <span className="flex items-center gap-1 text-slate-400 bg-slate-50 border border-slate-200 px-2.5 py-0.5 rounded-lg text-[10px]">
+                          <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                          </svg>
+                          Chưa liên kết tài khoản
                         </span>
                       )}
                     </div>
                   </div>
                 </div>
+
                 <div className="flex items-center gap-1.5 shrink-0 ml-3">
                   <button onClick={() => openEdit(p)} className="px-3.5 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-600 hover:text-blue-600 text-xs font-medium">Sửa</button>
-                  <button onClick={() => deletePartner(p.id)} className="px-3.5 py-1.5 rounded-lg bg-slate-50 text-slate-400 hover:text-red-500 hover:bg-red-50 text-xs font-medium">Xóa</button>
+                  <button onClick={() => handleDelete(p.id)} className="px-3.5 py-1.5 rounded-lg bg-slate-50 text-slate-400 hover:text-red-500 hover:bg-red-50 text-xs font-medium">Xóa</button>
                 </div>
               </div>
             </div>
@@ -251,6 +270,7 @@ export default function PartnersTab({ partners, setPartners, accounts }) {
         partners={partners}
         accounts={accounts}
       />
+
     </div>
   );
 }

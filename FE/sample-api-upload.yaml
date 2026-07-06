@@ -1,0 +1,17 @@
+- id: api-health-register
+  category: portal.categories.health
+  method: POST
+  path: /api/pvi/v1/health/register
+  description: Dang ky bao hiem suc khoe
+  requestSample:
+    CpId: nguyen van a
+    GoiBaoHiem: HEALTH_GOLD
+  responseFormat:
+    Status: "00"
+    Message: Thanh cong
+
+- id: api-health-query
+  category: portal.categories.health
+  method: POST
+  path: /api/pvi/v1/health/query
+  description: Tra cuu bao hiem suc khoe

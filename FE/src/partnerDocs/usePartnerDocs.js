@@ -1,11 +1,14 @@
+// src/partnerDocs/usePartnerDocs.js
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { DEFAULT_ENDPOINTS, VALIDATION_LIMITS } from '../MockData';
 import { cleanJsonString, clampValue } from './utils';
+import {
+  getPartners,
+  getAccounts,
+  getPermissionProfiles
+} from '../services/localStorageService';
 
 export default function usePartnerDocs() {
-  const [realEndpoints, setRealEndpoints] = useState([]);
-  const [rawProjectData, setRawProjectData] = useState([]);
-  const [showPermissionModal, setShowPermissionModal] = useState(false);
   const [activeEpId, setActiveEpId] = useState(null);
   const [authToken, setAuthToken] = useState('pvi_secret_access_key_2026');
   const [requestBodies, setRequestBodies] = useState({});
@@ -20,80 +23,74 @@ export default function usePartnerDocs() {
   const isClickScrolling = useRef(false);
   const observerRef = useRef(null);
 
-  const fetchApiDocuments = useCallback(() => {
-    const backendUrl = import.meta.env.VITE_API_URL || 'https://docs-ozw6.onrender.com';
-    const token = localStorage.getItem('token');
+  const [activeEndpoints, setActiveEndpoints] = useState([]);
 
-    fetch(`${backendUrl}/api/documents`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    })
-    .then(res => res.json())
-    .then(data => {
-      if (Array.isArray(data)) {
-        const flatList = [
-          { id: "auth-signature", category: "AUTHENTICATION", method: "HASH", path: "Thuật toán băm: MD5", description: "Quy tắc ký chữ ký bảo mật dữ liệu giao dịch (Sign)", isCustomPage: true, pageType: "signature" },
-          { id: "auth-headers", category: "AUTHENTICATION", method: "INFO", path: "HTTP Headers bắt buộc kèm theo", description: "Cấu hình HTTP Headers truyền tải thông tin định danh", isCustomPage: true, pageType: "headers" }
-        ];
+  useEffect(() => {
+    const savedUser = localStorage.getItem('user_info');
+    if (!savedUser) {
+      setActiveEndpoints(DEFAULT_ENDPOINTS);
+      return;
+    }
 
-        setRawProjectData(data);
-
-        data.forEach(proj => {
-          proj.documents.forEach(doc => {
-            doc.endpoints.forEach(ep => {
-              flatList.push({
-                id: ep.endpointId,
-                category: doc.title,
-                method: ep.method,
-                path: ep.path,
-                description: ep.name,
-                requestSample: ep.requestSample || {},
-                responseFormat: ep.responseFormat || {},
-                allowedPartners: ep.allowedPartners || []
-              });
-            });
-          });
-        });
-
-        flatList.push(
-          { id: "ref-dictionary", category: "REFERENCE CENTER", method: "DATA", path: "Từ điển dữ liệu toàn bộ hệ thống", description: "Data Dictionary - Tra cứu giải nghĩa định nghĩa tham số", isCustomPage: true, pageType: "dictionary" },
-          { id: "ref-status-codes", category: "REFERENCE CENTER", method: "CODE", path: "Mã lỗi quy ước hệ thống Core PVI", description: "Status & Error Codes - Bảng tra cứu mã phản hồi hệ thống", isCustomPage: true, pageType: "error-codes" },
-          { id: "changelog-versions", category: "CHANGELOG", method: "VER", path: "Nhật ký nâng cấp phiên bản", description: "Versions - Thông tin cập nhật hệ thống cổng kết nối", isCustomPage: true, pageType: "changelog" }
-        );
-
-        setRealEndpoints(flatList);
+    try {
+      const user = JSON.parse(savedUser);
+      if (user.role === 'admin') {
+        setActiveEndpoints(DEFAULT_ENDPOINTS);
+        return;
       }
-    })
-    .catch(err => console.error("Lỗi kết nối API:", err));
+
+      // Đối tác: Lọc theo Nhóm quyền tích hợp
+      const accounts = getAccounts();
+      const partners = getPartners();
+      const profiles = getPermissionProfiles();
+
+      const account = accounts.find(a => a.email.toLowerCase() === user.email.toLowerCase());
+      if (!account) {
+        setActiveEndpoints([]);
+        return;
+      }
+
+      const partner = partners.find(p => p.accountId === account.id);
+      if (!partner) {
+        setActiveEndpoints([]);
+        return;
+      }
+
+      if (partner.status !== 'active') {
+        setActiveEndpoints([]);
+        return;
+      }
+
+      const profileIds = partner.profileIds || (partner.profileId ? [partner.profileId] : []);
+      if (profileIds.length === 0) {
+        setActiveEndpoints([]);
+        return;
+      }
+
+      const allowedSet = new Set();
+      profileIds.forEach(pid => {
+        const prof = profiles.find(pr => pr.id === pid);
+        if (prof && prof.allowedApis) {
+          prof.allowedApis.forEach(aid => allowedSet.add(aid));
+        }
+      });
+      const filtered = DEFAULT_ENDPOINTS.filter(ep => allowedSet.has(ep.id));
+      setActiveEndpoints(filtered);
+    } catch (e) {
+      console.error("Lỗi phân quyền:", e);
+      setActiveEndpoints(DEFAULT_ENDPOINTS);
+    }
   }, []);
 
   useEffect(() => {
-    fetchApiDocuments();
-  }, [fetchApiDocuments]);
+    const initialBodies = {};
+    activeEndpoints.forEach(ep => {
+      const sampleText = ep.requestSample ? cleanJsonString(ep.requestSample) : '{}';
+      initialBodies[ep.id] = sampleText;
+    });
+    setRequestBodies(initialBodies);
+  }, [activeEndpoints]);
 
-  const handleTogglePermission = (type, targetId, partnerKey, currentChecked) => {
-    const backendUrl = import.meta.env.VITE_API_URL || 'https://docs-ozw6.onrender.com';
-    const token = localStorage.getItem('token');
-
-    let endpointUrl = `${backendUrl}/api/documents/endpoints/${targetId}/permissions`;
-    if (type === 'document') {
-      endpointUrl = `${backendUrl}/api/documents/docs/${targetId}/permissions`;
-    }
-
-    fetch(endpointUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify({ partnerKey, allow: !currentChecked })
-    })
-    .then(res => {
-      if (res.ok) { fetchApiDocuments(); }
-    })
-    .catch(err => console.error("Lỗi phân quyền hệ thống:", err));
-  };
-
-  const activeEndpoints = realEndpoints.length > 0 ? realEndpoints : DEFAULT_ENDPOINTS;
   const currentActiveEp = activeEndpoints.find(e => e.id === activeEpId) || activeEndpoints[0];
 
   useEffect(() => {
@@ -109,15 +106,6 @@ export default function usePartnerDocs() {
     const targetScroll = btn.offsetTop - (sidebar.clientHeight / 2) + (btn.offsetHeight / 2);
     sidebar.scrollTo({ top: Math.max(0, targetScroll), behavior: 'smooth' });
   }, []);
-
-  useEffect(() => {
-    const initialBodies = {};
-    activeEndpoints.forEach(ep => {
-      const sampleText = ep.requestSample ? cleanJsonString(ep.requestSample) : '{}';
-      initialBodies[ep.id] = sampleText;
-    });
-    setRequestBodies(initialBodies);
-  }, [activeEndpoints]);
 
   useEffect(() => {
     if (activeEndpoints.length === 0) return;
@@ -162,7 +150,6 @@ export default function usePartnerDocs() {
           if (parsed[key] !== validatedValue) { parsed[key] = validatedValue; hasChanged = true; }
         }
       });
-
       const nextBodyText = hasChanged ? JSON.stringify(parsed, null, 2) : rawText;
       setRequestBodies(prev => ({ ...prev, [id]: nextBodyText }));
     } catch (e) {
@@ -216,9 +203,8 @@ export default function usePartnerDocs() {
   const categories = Array.from(new Set(activeEndpoints.map(e => e.category || "CHUNG")));
 
   return {
-    rawProjectData,
-    showPermissionModal,
-    setShowPermissionModal,
+    activeEndpoints,
+    currentActiveEp,
     activeEpId,
     authToken,
     setAuthToken,
@@ -233,11 +219,8 @@ export default function usePartnerDocs() {
     middleScrollRef,
     sidebarScrollRef,
     apiRefs,
-    handleTogglePermission,
-    activeEndpoints,
-    currentActiveEp,
-    handleFormFieldChange,
     handleTextareaChange,
+    handleFormFieldChange,
     handleExecuteSandbox,
     scrollToApi,
     categories,

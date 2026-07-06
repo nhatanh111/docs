@@ -1,0 +1,52 @@
+[
+  {
+    "id": "api-health-register",
+    "category": "portal.categories.health",
+    "method": "POST",
+    "path": "/api/pvi/v1/health/register",
+    "description": "portal.endpoints.health_register",
+    "requestSample": {
+      "CpId": "nguyen van a",
+      "TenKH": "Tran Thi B",
+      "GoiBaoHiem": "HEALTH_GOLD"
+    },
+    "responseFormat": {
+      "Status": "00",
+      "Message": "Dang ky bao hiem suc khoe thanh cong",
+      "Data": { "so_gcn": "GCN/HEALTH/2026/001" }
+    }
+  },
+  {
+    "id": "api-health-query",
+    "category": "portal.categories.health",
+    "method": "POST",
+    "path": "/api/pvi/v1/health/query",
+    "description": "portal.endpoints.health_query",
+    "requestSample": {
+      "CpId": "nguyen van a",
+      "so_gcn": "GCN/HEALTH/2026/001"
+    },
+    "responseFormat": {
+      "Status": "00",
+      "Message": "Tra cuu thanh cong",
+      "Data": { "TrangThai": "ACTIVE", "NgayHetHan": "03/07/2027" }
+    }
+  },
+  {
+    "id": "api-property-insure",
+    "category": "portal.categories.property",
+    "method": "POST",
+    "path": "/api/pvi/v1/property/insure",
+    "description": "portal.endpoints.property_insure",
+    "requestSample": {
+      "CpId": "nguyen van a",
+      "GiaTriTaiSan": 5000000000,
+      "LoaiHinhBaoHiem": "CHAY_NO"
+    },
+    "responseFormat": {
+      "Status": "00",
+      "Message": "Cap don bao hiem tai san thanh cong",
+      "Data": { "so_gcn": "GCN/PROP/2026/001", "PhiBaoHiem": 25000000 }
+    }
+  }
+]

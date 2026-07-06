@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { SUPPORTED_LANGUAGES, generateLanguageSnippet } from '../MockData';
 import CodeHighlighter from './CodeHighlighter';
 import { getFormFields } from './utils';
@@ -19,30 +20,33 @@ export default function SandboxPanel({
   apiResponses,
   setApiResponses,
 }) {
+  const { t } = useTranslation();
+
   const handleCopyCode = async () => {
     const currentSnippetText = generateLanguageSnippet(selectedLang, currentActiveEp, requestBodies[currentActiveEp?.id]);
     if (currentSnippetText) {
       await navigator.clipboard.writeText(currentSnippetText);
-      alert(`📋 Đã copy đoạn mã [${selectedLang.toUpperCase()}] thành công!`);
+      alert(t('portal.labels.copy_code'));
     }
   };
 
   const formFields = getFormFields(requestBodies[currentActiveEp?.id]);
 
   return (
-    <div className="w-[450px] shrink-0 bg-[#ffffff] text-slate-800 p-5 flex flex-col space-y-5 border-l border-slate-200 overflow-y-auto select-none min-w-0 custom-scrollbar text-left shadow-2xl">
+    <div className="w-[550px] shrink-0 bg-[#ffffff] text-slate-800 p-5 flex flex-col space-y-5 border-l border-slate-200 overflow-y-auto select-none min-w-0 custom-scrollbar text-left shadow-2xl">
 
+      {/* Code Generator */}
       <div className="space-y-3 border border-slate-200 bg-slate-50/50 p-3 rounded-2xl">
         <div className="flex items-center justify-between font-sans">
           <div className="text-[11px] uppercase text-slate-700 font-extrabold tracking-wider flex items-center gap-1.5">
-            <span>🛠️</span> Code Generator Templates
+            <span>🛠️</span> {t('portal.labels.code_generator')}
           </div>
           <button
             type="button"
             onClick={handleCopyCode}
             className="text-[10px] px-3 py-1 rounded-xl bg-slate-900 text-white hover:bg-slate-800 transition-all cursor-pointer border-0 font-bold shadow-sm"
           >
-            📋 Copy Code
+            {t('portal.labels.copy_code')}
           </button>
         </div>
 
@@ -68,7 +72,7 @@ export default function SandboxPanel({
           <div className="absolute right-2.5 top-2 text-[9px] text-slate-500 font-bold select-none uppercase tracking-wider font-sans">
             {selectedLang}
           </div>
-          <pre className="w-full h-40 bg-[#0f172a] text-slate-300 font-mono text-[11px] leading-relaxed p-3 border-0 overflow-y-auto select-text custom-scrollbar resize-none text-left m-0 whitespace-pre-wrap">
+          <pre className="w-full h-32 bg-[#0f172a] text-slate-300 font-mono text-[11px] leading-relaxed p-3 border-0 overflow-y-auto select-text custom-scrollbar resize-none text-left m-0 whitespace-pre-wrap">
             <CodeHighlighter
               code={generateLanguageSnippet(selectedLang, currentActiveEp, requestBodies[currentActiveEp?.id])}
               lang={selectedLang}
@@ -77,7 +81,8 @@ export default function SandboxPanel({
         </div>
       </div>
 
-      <div className="border border-slate-200 rounded-2xl p-4 bg-white shadow-sm flex flex-col space-y-4 font-sans">
+      {/* Request System */}
+      <div className="border border-slate-200 rounded-2xl p-4 bg-white shadow-sm flex flex-col space-y-4 font-sans flex-1">
         <div className="flex items-center justify-between border-b border-slate-100 pb-2">
           <span className="text-xs font-black uppercase text-slate-900 tracking-wide">REQUEST SYSTEM</span>
 
@@ -99,7 +104,7 @@ export default function SandboxPanel({
 
         <div className="space-y-1 text-xs">
           <div className="text-slate-500 font-bold flex items-center gap-1">
-            <span>▾</span> Base URL
+            <span>▾</span> {t('portal.labels.base_url')}
           </div>
           <div className="text-slate-800 font-mono text-[11px] bg-slate-50 border border-slate-200 px-3 py-2 rounded-xl break-all">
             {import.meta.env.VITE_API_URL || 'https://docs-ozw6.onrender.com'}
@@ -108,7 +113,7 @@ export default function SandboxPanel({
 
         <div className="space-y-1 text-xs">
           <div className="text-slate-500 font-bold flex items-center gap-1">
-            <span>▾</span> Auth (Bearer Token)
+            <span>▾</span> {t('portal.labels.auth_token_label')}
           </div>
           <input
             type="text"
@@ -121,13 +126,13 @@ export default function SandboxPanel({
 
         <div className="space-y-2 text-xs flex-1 flex flex-col min-h-0">
           <div className="text-slate-500 font-bold flex items-center justify-between">
-            <span className="flex items-center gap-1">▾ Body <span className="text-[9px] bg-red-100 text-red-600 px-1 rounded font-black">REQUIRED</span></span>
+            <span className="flex items-center gap-1">▾ {t('portal.labels.body_required')}</span>
             {!isFormMode && <span className="text-[9px] text-amber-600 font-bold bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">AUTO-VALIDATE</span>}
           </div>
 
           {currentActiveEp?.isCustomPage && currentActiveEp?.pageType !== "overview" ? (
             <div className="flex-1 flex flex-col justify-center items-center text-center p-4 border border-dashed border-slate-200 rounded-xl bg-slate-50 text-slate-400">
-              <p className="text-[11px] leading-normal">Trang tham chiếu tĩnh không chứa tham số yêu cầu.</p>
+              <p className="text-[11px] leading-normal">{t('portal.labels.no_params')}</p>
             </div>
           ) : isFormMode ? (
             <div className="space-y-3 max-h-52 overflow-y-auto pr-1 custom-scrollbar">
@@ -152,7 +157,7 @@ export default function SandboxPanel({
             <textarea
               value={requestBodies[currentActiveEp?.id] || '{}'}
               onChange={(e) => handleTextareaChange(currentActiveEp?.id, e.target.value)}
-              className="w-full h-36 bg-[#0f172a] border border-slate-800 rounded-xl p-3 text-emerald-400 font-mono text-xs leading-relaxed shadow-inner resize-none focus:outline-none focus:border-blue-500 overflow-y-auto select-text"
+              className="w-full h-44 bg-[#0f172a] border border-slate-800 rounded-xl p-3 text-emerald-400 font-mono text-xs leading-relaxed shadow-inner resize-none focus:outline-none focus:border-blue-500 overflow-y-auto select-text"
             />
           )}
         </div>
@@ -171,24 +176,25 @@ export default function SandboxPanel({
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
               </svg>
-              <span>SENDING API REQUEST...</span>
+              <span>{t('portal.labels.sending')}</span>
             </>
           ) : (
-            <span>SEND API REQUEST</span>
+            <span>{t('portal.labels.send_request')}</span>
           )}
         </button>
       </div>
 
-      <div className="border border-slate-200 rounded-2xl p-4 bg-white shadow-sm flex flex-col h-44 overflow-hidden font-sans">
+      {/* Response */}
+      <div className="border border-slate-200 rounded-2xl p-4 bg-white shadow-sm flex flex-col h-52 overflow-hidden font-sans">
         <div className="flex items-center justify-between border-b border-slate-100 pb-2 mb-2">
-          <span className="text-xs font-black uppercase text-slate-900 tracking-wide">RESPONSE BACKEND</span>
+          <span className="text-xs font-black uppercase text-slate-900 tracking-wide">{t('portal.labels.response')}</span>
           {apiResponses[currentActiveEp?.id] && (
             <button
               type="button"
               onClick={() => setApiResponses(prev => ({ ...prev, [currentActiveEp?.id]: null }))}
               className="text-[10px] text-red-500 font-bold bg-red-50 border-0 hover:bg-red-100 px-2 py-0.5 rounded cursor-pointer transition-all"
             >
-              CLEAR
+              {t('portal.labels.clear')}
             </button>
           )}
         </div>
@@ -197,7 +203,7 @@ export default function SandboxPanel({
             <pre className="max-w-full overflow-x-auto whitespace-pre-wrap m-0 text-left">{JSON.stringify(apiResponses[currentActiveEp?.id], null, 2)}</pre>
           ) : (
             <span className="text-slate-500 italic font-sans text-xs flex h-full items-center justify-center text-center">
-              Click the "Send API Request" button above and see the response here!
+              {t('portal.labels.no_response')}
             </span>
           )}
         </div>

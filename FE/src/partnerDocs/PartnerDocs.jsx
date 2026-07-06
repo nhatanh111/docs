@@ -1,5 +1,4 @@
 import React from 'react';
-import PermissionModal from '../PermissionModal';
 import usePartnerDocs from './usePartnerDocs';
 import DocsSidebar from './DocsSidebar';
 import DocsMainContent from './DocsMainContent';
@@ -7,9 +6,7 @@ import SandboxPanel from './SandboxPanel';
 
 export default function PartnerDocs() {
   const {
-    rawProjectData,
-    showPermissionModal,
-    setShowPermissionModal,
+    activeEndpoints,
     activeEpId,
     authToken,
     setAuthToken,
@@ -24,11 +21,8 @@ export default function PartnerDocs() {
     middleScrollRef,
     sidebarScrollRef,
     apiRefs,
-    handleTogglePermission,
-    activeEndpoints,
-    currentActiveEp,
-    handleFormFieldChange,
     handleTextareaChange,
+    handleFormFieldChange,
     handleExecuteSandbox,
     scrollToApi,
     categories,
@@ -36,7 +30,6 @@ export default function PartnerDocs() {
 
   return (
     <div className="flex h-screen w-full bg-white text-slate-800 text-sm overflow-hidden select-text font-sans">
-
       <DocsSidebar
         sidebarScrollRef={sidebarScrollRef}
         categories={categories}
@@ -44,15 +37,13 @@ export default function PartnerDocs() {
         activeEpId={activeEpId}
         scrollToApi={scrollToApi}
       />
-
       <DocsMainContent
         middleScrollRef={middleScrollRef}
         activeEndpoints={activeEndpoints}
         apiRefs={apiRefs}
       />
-
       <SandboxPanel
-        currentActiveEp={currentActiveEp}
+        currentActiveEp={activeEndpoints.find(e => e.id === activeEpId) || activeEndpoints[0]}
         selectedLang={selectedLang}
         setSelectedLang={setSelectedLang}
         requestBodies={requestBodies}
@@ -67,14 +58,6 @@ export default function PartnerDocs() {
         apiResponses={apiResponses}
         setApiResponses={setApiResponses}
       />
-
-      <PermissionModal
-        isOpen={showPermissionModal}
-        onClose={() => setShowPermissionModal(false)}
-        rawProjectData={rawProjectData}
-        onTogglePermission={handleTogglePermission}
-      />
-
     </div>
   );
 }

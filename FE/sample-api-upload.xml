@@ -1,0 +1,16 @@
+<endpoints>
+  <endpoint>
+    <id>api-health-register</id>
+    <category>portal.categories.health</category>
+    <method>POST</method>
+    <path>/api/pvi/v1/health/register</path>
+    <description>Đăng ký bảo hiểm sức khỏe</description>
+  </endpoint>
+  <endpoint>
+    <id>api-health-query</id>
+    <category>portal.categories.health</category>
+    <method>POST</method>
+    <path>/api/pvi/v1/health/query</path>
+    <description>Tra cứu bảo hiểm sức khỏe</description>
+  </endpoint>
+</endpoints>

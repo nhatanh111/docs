@@ -1,5 +1,6 @@
 import React from 'react';
-import { VALIDATION_LIMITS, FIELD_DICTIONARY } from '../MockData';
+import { useTranslation } from 'react-i18next';
+import { VALIDATION_LIMITS } from '../MockData';
 import { cleanJsonString } from './utils';
 
 const REQUIRED_FIELDS = ['client_id', 'client_secret', 'grant_type', 'CpId', 'Sign', 'so_gcn', 'MaSoThue', 'NgayDoiSoat', 'type', 'ma_giaodich'];
@@ -13,6 +14,8 @@ const getTypeColor = (t) => {
 };
 
 function SchemaNode({ dataObj }) {
+  const { t } = useTranslation();
+
   if (!dataObj) return null;
 
   let workingObj = dataObj;
@@ -25,7 +28,7 @@ function SchemaNode({ dataObj }) {
   }
 
   const keys = Object.keys(workingObj);
-  if (keys.length === 0) return <div className="text-xs text-slate-400 italic pl-2">Trống (Rỗng)</div>;
+  if (keys.length === 0) return <div className="text-xs text-slate-400 italic pl-2">{t('fields.default', 'Empty')}</div>;
 
   return keys.map((key, index) => {
     const value = workingObj[key];
@@ -34,7 +37,8 @@ function SchemaNode({ dataObj }) {
     else if (value === null) type = 'null';
 
     const isRequired = REQUIRED_FIELDS.includes(key);
-    const description = FIELD_DICTIONARY[key] || "Trường dữ liệu tích hợp thuộc nghiệp vụ logic Core Insurance PVI.";
+    // Lấy mô tả theo ngôn ngữ hiện tại từ i18n, fallback về key mặc định
+    const description = t(`fields.${key}`, t('fields.default'));
     const hasLimitRule = VALIDATION_LIMITS[key];
 
     return (
@@ -62,7 +66,7 @@ function SchemaNode({ dataObj }) {
         )}
         {type === 'array' && value.length > 0 && typeof value[0] === 'object' && value[0] !== null && (
           <div className="mt-2 pl-2 border-l border-dashed border-slate-300 space-y-1 max-w-full">
-            <div className="text-[10px] text-amber-600 font-mono italic mb-1">↳ Cấu trúc đối tượng con:</div>
+            <div className="text-[10px] text-amber-600 font-mono italic mb-1">↳ {t('fields.array_child', 'Child object structure:')}</div>
             <SchemaNode dataObj={value[0]} />
           </div>
         )}

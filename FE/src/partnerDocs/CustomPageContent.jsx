@@ -1,26 +1,27 @@
+// src/partnerDocs/CustomPageContent.jsx
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { FIELD_DICTIONARY, ERROR_CODES_DATA } from '../MockData';
 
 export default function CustomPageContent({ type }) {
+  const { t } = useTranslation();
+
   if (type === "overview") {
     return (
       <div className="space-y-6 text-left">
-        <p className="text-sm text-slate-600 leading-relaxed">
-          Chào mừng đối tác đến với tài liệu kỹ thuật tích hợp cổng thông tin điện tử bảo hiểm <strong>A Hub</strong>. Hệ thống hỗ trợ xử lý luồng tính toán phí và phát hành ấn chỉ tự động kết nối Core Insurance của PVI Đông Đô.
-        </p>
+        <p className="text-sm text-slate-600 leading-relaxed" dangerouslySetInnerHTML={{ __html: t('portal.custom.overview') }} />
         <div className="grid grid-cols-2 gap-4">
           <div className="border border-slate-200 bg-slate-50 rounded-xl p-4">
-            <div className="font-bold text-slate-800 text-xs uppercase mb-1">Môi trường Sandbox</div>
+            <div className="font-bold text-slate-800 text-xs uppercase mb-1">{t('portal.custom.sandbox_url')}</div>
             <code className="text-blue-600 font-mono text-xs break-all block">https://sandbox-api.pvi.vn</code>
           </div>
           <div className="border border-slate-200 bg-slate-50 rounded-xl p-4">
-            <div className="font-bold text-slate-800 text-xs uppercase mb-1">Môi trường Production</div>
+            <div className="font-bold text-slate-800 text-xs uppercase mb-1">{t('portal.custom.prod_url')}</div>
             <code className="text-emerald-600 font-mono text-xs break-all block">https://api.pvi.vn</code>
           </div>
         </div>
         <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-xs text-amber-800 leading-relaxed">
-          <strong className="block mb-1 font-bold">📌 Lưu ý tích hợp:</strong>
-          Mọi cổng payload gửi lên đều bắt buộc mã hóa định dạng UTF-8, cấu trúc JSON ứng với phương thức giao dịch POST bảo mật.
+          <strong className="block mb-1 font-bold">{t('portal.custom.note')}</strong>
         </div>
       </div>
     );
@@ -29,7 +30,7 @@ export default function CustomPageContent({ type }) {
   if (type === "headers") {
     return (
       <div className="space-y-4 text-left">
-        <p className="text-xs text-slate-600">Mọi cuộc gọi API lõi nghiệp vụ từ phía Đối tác đều bắt buộc phải khai báo cấu hình danh sách HTTP Headers dưới đây:</p>
+        <p className="text-xs text-slate-600">{t('portal.custom.headers_desc')}</p>
         <pre className="bg-slate-50 border p-4 rounded-xl font-mono text-xs text-slate-700 leading-relaxed">{`{\n  "Content-Type": "application/json",\n  "Authorization": "Bearer eyJhbGciOiJIUzI1Ni...",\n  "CpId": "PARTNER_ID_AN_BIEN",\n  "Sign": "8cc21a24890c2918bb1237a892b11a12"\n}`}</pre>
       </div>
     );
@@ -41,8 +42,8 @@ export default function CustomPageContent({ type }) {
         <table className="w-full border-collapse text-xs">
           <thead className="bg-slate-50 border-b border-slate-200">
             <tr>
-              <th className="p-3 font-semibold text-slate-700 text-left">Trường (Field Key)</th>
-              <th className="p-3 font-semibold text-slate-700 text-left">Ý nghĩa giải nghĩa tham số hệ thống</th>
+              <th className="p-3 font-semibold text-slate-700 text-left">{t('portal.custom.dictionary_title')}</th>
+              <th className="p-3 font-semibold text-slate-700 text-left">{t('portal.custom.dictionary_desc')}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 font-sans">
@@ -64,8 +65,8 @@ export default function CustomPageContent({ type }) {
         <table className="w-full border-collapse text-xs">
           <thead className="bg-slate-50 border-b border-slate-200">
             <tr>
-              <th className="p-3 font-semibold text-slate-700 w-24 text-center">Mã Code</th>
-              <th className="p-3 font-semibold text-slate-700 text-left">Định nghĩa chi tiết lỗi nghiệp vụ</th>
+              <th className="p-3 font-semibold text-slate-700 w-24 text-center">{t('portal.custom.error_code')}</th>
+              <th className="p-3 font-semibold text-slate-700 text-left">{t('portal.custom.error_desc')}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
@@ -90,8 +91,8 @@ export default function CustomPageContent({ type }) {
             <span className="bg-emerald-50 text-emerald-600 text-[9px] px-1.5 py-0.5 rounded font-black border border-emerald-100">LATEST</span>
           </div>
           <ul className="list-disc ml-5 text-xs text-slate-600 space-y-1">
-            <li>Cập nhật bổ sung 10 API nghiệp vụ: Khai báo bồi thường, Đối soát kế toán, CRM, Tái bảo hiểm.</li>
-            <li>Tối ưu cơ chế Validate kiểm tra trường dữ liệu (Validation Limits) trên Sandbox Portal.</li>
+            <li>{t('portal.custom.changelog_detail')}</li>
+            <li>{t('portal.custom.changelog_optimize')}</li>
           </ul>
         </div>
         <div className="border rounded-xl p-4 bg-slate-50/20">
