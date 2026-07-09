@@ -39,7 +39,6 @@ export default function SandboxPanel({
       <div className="space-y-3 border border-slate-200 bg-slate-50/50 p-3 rounded-2xl">
         <div className="flex items-center justify-between font-sans">
           <div className="text-[11px] uppercase text-slate-700 font-extrabold tracking-wider flex items-center gap-1.5">
-            <span>🛠️</span>
           </div>
           <button
             type="button"
