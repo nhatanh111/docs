@@ -49,7 +49,6 @@ export default function SandboxPanel({
                   : 'text-slate-500 bg-transparent hover:text-slate-900 hover:bg-slate-200/50'
               }`}
             >
-              <span>{lang.icon}</span>
               <span>{lang.name}</span>
             </button>
           ))}
