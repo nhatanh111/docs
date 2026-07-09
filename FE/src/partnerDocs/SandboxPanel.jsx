@@ -68,7 +68,7 @@ export default function SandboxPanel({
         </div>
 
         <div className="bg-[#0f172a] rounded-xl border border-slate-800 shadow-xl max-w-full overflow-hidden relative">
-          <div className="absolute right-2.5 top-2 text-[9px] text-slate-500 font-bold select-none uppercase tracking-wider font-sans">
+          <div className="absolute right-2.5 top-2 text-[11px] text-slate-500 font-bold select-none uppercase tracking-wider font-sans">
             {selectedLang}
           </div>
           <pre className="w-full h-32 bg-[#0f172a] text-slate-300 font-mono text-[13px] leading-relaxed p-3 border-0 overflow-y-auto select-text custom-scrollbar resize-none text-left m-0 whitespace-pre-wrap">
