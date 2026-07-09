@@ -68,7 +68,7 @@ export default function App() {
               <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-blue-700 to-sky-500 text-white flex items-center justify-center text-xs font-bold uppercase">
                 {user.name?.charAt(0)}
               </div>
-              <span>{t('app.welcome')}, <strong className="text-blue-400">{user.name}</strong></span>
+              <span>{t('app.welcome')}, <strong className="text-blue-400">{user.role === 'admin' ? 'Admin' : user.name}</strong></span>
             </div>
 
             {showUserMenu && (

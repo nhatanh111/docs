@@ -1,13 +1,9 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { SUPPORTED_LANGUAGES, generateLanguageSnippet } from '../MockData';
-import CodeHighlighter from './CodeHighlighter';
 import { getFormFields } from './utils';
 
 export default function SandboxPanel({
   currentActiveEp,
-  selectedLang,
-  setSelectedLang,
   requestBodies,
   authToken,
   setAuthToken,
@@ -22,64 +18,11 @@ export default function SandboxPanel({
 }) {
   const { t } = useTranslation();
 
-  const handleCopyCode = async () => {
-    const currentSnippetText = generateLanguageSnippet(selectedLang, currentActiveEp, requestBodies[currentActiveEp?.id]);
-    if (currentSnippetText) {
-      await navigator.clipboard.writeText(currentSnippetText);
-      alert(t('portal.labels.copy_code'));
-    }
-  };
-
   const formFields = getFormFields(requestBodies[currentActiveEp?.id]);
 
   return (
     <div className="w-[550px] shrink-0 bg-[#ffffff] text-slate-800 p-5 flex flex-col space-y-5 border-l border-slate-200 overflow-y-auto select-none min-w-0 custom-scrollbar text-left shadow-2xl">
 
-      {/* Code Generator */}
-      <div className="space-y-3 border border-slate-200 bg-slate-50/50 p-3 rounded-2xl">
-        <div className="flex items-center justify-between font-sans">
-          <div className="text-[11px] uppercase text-slate-700 font-extrabold tracking-wider flex items-center gap-1.5">
-            <span>🛠️</span> {t('portal.labels.code_generator')}
-          </div>
-          <button
-            type="button"
-            onClick={handleCopyCode}
-            className="text-[10px] px-3 py-1 rounded-xl bg-slate-900 text-white hover:bg-slate-800 transition-all cursor-pointer border-0 font-bold shadow-sm"
-          >
-            {t('portal.labels.copy_code')}
-          </button>
-        </div>
-
-        <div className="flex w-full max-w-full bg-[#f1f5f9] p-1 rounded-xl border border-slate-200 overflow-x-auto whitespace-nowrap gap-1 custom-scrollbar select-none">
-          {SUPPORTED_LANGUAGES.map((lang) => (
-            <button
-              key={lang.id}
-              type="button"
-              onClick={() => setSelectedLang(lang.id)}
-              className={`flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-bold transition-all border-0 cursor-pointer shrink-0 ${
-                selectedLang === lang.id
-                  ? 'bg-white text-blue-600 shadow-sm border border-slate-200'
-                  : 'text-slate-500 bg-transparent hover:text-slate-900 hover:bg-slate-200/50'
-              }`}
-            >
-              <span>{lang.icon}</span>
-              <span>{lang.name}</span>
-            </button>
-          ))}
-        </div>
-
-        <div className="bg-[#0f172a] rounded-xl border border-slate-800 shadow-xl max-w-full overflow-hidden relative">
-          <div className="absolute right-2.5 top-2 text-[9px] text-slate-500 font-bold select-none uppercase tracking-wider font-sans">
-            {selectedLang}
-          </div>
-          <pre className="w-full h-32 bg-[#0f172a] text-slate-300 font-mono text-[11px] leading-relaxed p-3 border-0 overflow-y-auto select-text custom-scrollbar resize-none text-left m-0 whitespace-pre-wrap">
-            <CodeHighlighter
-              code={generateLanguageSnippet(selectedLang, currentActiveEp, requestBodies[currentActiveEp?.id])}
-              lang={selectedLang}
-            />
-          </pre>
-        </div>
-      </div>
 
       {/* Request System */}
       <div className="border border-slate-200 rounded-2xl p-4 bg-white shadow-sm flex flex-col space-y-4 font-sans flex-1">
