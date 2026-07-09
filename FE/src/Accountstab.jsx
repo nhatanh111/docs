@@ -109,26 +109,24 @@ export default function AccountsTab({ accounts, setAccounts }) {
     setIsModalOpen(true);
   };
 
-  const saveAccount = (e) => {
+  const saveAccount = async (e) => {
     e.preventDefault();
     try {
       if (modalMode === 'add') {
-        // Kiểm tra email trùng
         if (accounts.find(a => a.email.toLowerCase() === currentAccount.email.toLowerCase())) {
           alert('❌ Email này đã tồn tại trong hệ thống!');
           return;
         }
-        const newAccount = addAccountService(currentAccount);
+        const newAccount = await addAccountService(currentAccount);
         setAccounts(prev => [...prev, newAccount]);
         alert(`✅ Tài khoản "${newAccount.email}" đã được tạo!\n📧 Email: ${newAccount.email}\n🔑 Mật khẩu: ${currentAccount.password}`);
       } else {
-        // Giữ password cũ nếu không nhập mới
         const dataToUpdate = { ...currentAccount };
         if (!dataToUpdate.password) {
           const existingAcc = accounts.find(a => a.id === currentAccount.id);
           dataToUpdate.password = existingAcc?.password || '';
         }
-        const updated = updateAccountService(currentAccount.id, dataToUpdate);
+        const updated = await updateAccountService(currentAccount.id, dataToUpdate);
         setAccounts(prev => prev.map(a => a.id === updated.id ? updated : a));
         alert(t('accounts.updated_success'));
       }
@@ -138,10 +136,10 @@ export default function AccountsTab({ accounts, setAccounts }) {
     }
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (!window.confirm(t('accounts.delete_confirm'))) return;
     try {
-      deleteAccountService(id);
+      await deleteAccountService(id);
       setAccounts(prev => prev.filter(a => a.id !== id));
     } catch (error) {
       alert(t('accounts.delete_error') + ' ' + error.message);

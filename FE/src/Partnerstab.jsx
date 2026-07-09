@@ -153,15 +153,15 @@ export default function PartnersTab({ partners, setPartners, accounts }) {
     setIsModalOpen(true);
   };
 
-  const savePartner = (e) => {
+  const savePartner = async (e) => {
     e.preventDefault();
     try {
       if (modalMode === 'add') {
-        const newPartner = addPartnerService(currentPartner);
+        const newPartner = await addPartnerService(currentPartner);
         setPartners(prev => [...prev, newPartner]);
         setIsModalOpen(false);
       } else {
-        const updated = updatePartnerService(currentPartner.id, currentPartner);
+        const updated = await updatePartnerService(currentPartner.id, currentPartner);
         setPartners(prev => prev.map(p => p.id === updated.id ? updated : p));
         setIsModalOpen(false);
       }
@@ -170,10 +170,10 @@ export default function PartnersTab({ partners, setPartners, accounts }) {
     }
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (!window.confirm('Xóa đối tác này?')) return;
     try {
-      deletePartnerService(id);
+      await deletePartnerService(id);
       setPartners(prev => prev.filter(p => p.id !== id));
     } catch (error) {
       alert('❌ Lỗi xóa: ' + error.message);

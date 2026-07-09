@@ -1,10 +1,21 @@
 
+import { accountsApi, partnersApi } from './api';
+
 const ACCOUNTS_KEY = 'pvi_accounts';
 const PARTNERS_KEY = 'pvi_partners';
 const PERMISSION_CATEGORIES_KEY = 'pvi_permission_categories';
 const API_GROUPS_KEY = 'pvi_api_groups';
 const PROFILES_KEY = 'pvi_permission_profiles';
 const UPLOADED_ENDPOINTS_KEY = 'pvi_uploaded_endpoints';
+
+const tryAPI = async (apiFn, fallbackFn) => {
+  try {
+    const result = await apiFn();
+    return result;
+  } catch {
+    return fallbackFn();
+  }
+};
 
 // Dữ liệu mặc định
 export const FALLBACK_ACCOUNTS = [
@@ -73,33 +84,65 @@ export const saveAccounts = (accounts) => {
   localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(accounts));
 };
 
-export const addAccount = (account) => {
-  const accounts = getAccounts();
-  const newId = accounts.length ? Math.max(...accounts.map(a => a.id)) + 1 : 1;
-  const newAccount = { ...account, id: newId };
-  const updated = [...accounts, newAccount];
-  saveAccounts(updated);
-  return newAccount;
+export const addAccount = async (account) => {
+  try {
+    const result = await accountsApi.create(account);
+    const accounts = getAccounts();
+    const updated = [...accounts, result];
+    saveAccounts(updated);
+    return result;
+  } catch {
+    const accounts = getAccounts();
+    const newId = accounts.length ? Math.max(...accounts.map(a => a.id)) + 1 : 1;
+    const newAccount = { ...account, id: newId };
+    const updated = [...accounts, newAccount];
+    saveAccounts(updated);
+    return newAccount;
+  }
 };
 
-export const updateAccount = (id, data) => {
-  const accounts = getAccounts();
-  const index = accounts.findIndex(a => a.id === id);
-  if (index === -1) throw new Error('Account not found');
-  const updated = { ...accounts[index], ...data };
-  accounts[index] = updated;
-  saveAccounts(accounts);
-  return updated;
+export const updateAccount = async (id, data) => {
+  try {
+    const result = await accountsApi.update(id, data);
+    const accounts = getAccounts();
+    const index = accounts.findIndex(a => a.id === id);
+    if (index !== -1) {
+      accounts[index] = { ...accounts[index], ...result };
+      saveAccounts(accounts);
+    }
+    return result;
+  } catch {
+    const accounts = getAccounts();
+    const index = accounts.findIndex(a => a.id === id);
+    if (index === -1) throw new Error('Account not found');
+    const updated = { ...accounts[index], ...data };
+    accounts[index] = updated;
+    saveAccounts(accounts);
+    return updated;
+  }
 };
 
-export const deleteAccount = (id) => {
+export const deleteAccount = async (id) => {
+  try {
+    await accountsApi.delete(id);
+  } catch {}
   const accounts = getAccounts();
   const filtered = accounts.filter(a => a.id !== id);
   saveAccounts(filtered);
 };
 
 // --- Partners ---
-export const getPartners = () => {
+export const getPartners = async () => {
+  try {
+    const result = await partnersApi.list();
+    localStorage.setItem(PARTNERS_KEY, JSON.stringify(result));
+    return result;
+  } catch {
+    return getPartnersLocal();
+  }
+};
+
+export const getPartnersLocal = () => {
   const stored = localStorage.getItem(PARTNERS_KEY);
   let partners = [];
   if (stored) {
@@ -145,63 +188,74 @@ export const savePartners = (partners) => {
   localStorage.setItem(PARTNERS_KEY, JSON.stringify(partners));
 };
 
-export const addPartner = (partner) => {
-  const partners = getPartners();
-  const maxId = partners.reduce((max, p) => {
-    const num = parseInt(p.id.split('-')[1]) || 0;
-    return num > max ? num : max;
-  }, 0);
-  const newId = `pt-${maxId + 1}`;
-  
-  // Lấy allowedApis ban đầu từ union các profileIds
-  const profiles = getPermissionProfiles();
-  const allowedSet = new Set();
-  (partner.profileIds || []).forEach(pid => {
-    const prof = profiles.find(pr => pr.id === pid);
-    if (prof && prof.allowedApis) {
-      prof.allowedApis.forEach(aid => allowedSet.add(aid));
-    }
-  });
-  
-  const newPartner = { 
-    ...partner, 
-    id: newId,
-    allowedApis: Array.from(allowedSet)
-  };
-  const updated = [...partners, newPartner];
-  savePartners(updated);
-  return newPartner;
-};
-
-export const updatePartner = (id, data) => {
-  const partners = getPartners();
-  const index = partners.findIndex(p => p.id === id);
-  if (index === -1) throw new Error('Partner not found');
-  
-  const oldPartner = partners[index];
-  let allowedApis = data.allowedApis || oldPartner.allowedApis;
-  
-  // Nếu đổi profileIds, nạp lại allowedApis mặc định từ union các profile mới
-  if (data.profileIds && JSON.stringify(data.profileIds) !== JSON.stringify(oldPartner.profileIds || [])) {
+export const addPartner = async (partner) => {
+  try {
+    const result = await partnersApi.create(partner);
+    const partners = getPartnersLocal();
+    const updated = [...partners, result];
+    savePartners(updated);
+    return result;
+  } catch {
+    const partners = getPartnersLocal();
+    const maxId = partners.reduce((max, p) => {
+      const num = parseInt(p.id.split('-')[1]) || 0;
+      return num > max ? num : max;
+    }, 0);
+    const newId = `pt-${maxId + 1}`;
     const profiles = getPermissionProfiles();
     const allowedSet = new Set();
-    (data.profileIds || []).forEach(pid => {
+    (partner.profileIds || []).forEach(pid => {
       const prof = profiles.find(pr => pr.id === pid);
       if (prof && prof.allowedApis) {
         prof.allowedApis.forEach(aid => allowedSet.add(aid));
       }
     });
-    allowedApis = Array.from(allowedSet);
+    const newPartner = { ...partner, id: newId, allowedApis: Array.from(allowedSet) };
+    const updated = [...partners, newPartner];
+    savePartners(updated);
+    return newPartner;
   }
-  
-  const updated = { ...oldPartner, ...data, allowedApis };
-  partners[index] = updated;
-  savePartners(partners);
-  return updated;
 };
 
-export const deletePartner = (id) => {
-  const partners = getPartners();
+export const updatePartner = async (id, data) => {
+  try {
+    const result = await partnersApi.update(id, data);
+    const partners = getPartnersLocal();
+    const index = partners.findIndex(p => p.id === id);
+    if (index !== -1) {
+      partners[index] = { ...partners[index], ...result };
+      savePartners(partners);
+    }
+    return result;
+  } catch {
+    const partners = getPartnersLocal();
+    const index = partners.findIndex(p => p.id === id);
+    if (index === -1) throw new Error('Partner not found');
+    const oldPartner = partners[index];
+    let allowedApis = data.allowedApis || oldPartner.allowedApis;
+    if (data.profileIds && JSON.stringify(data.profileIds) !== JSON.stringify(oldPartner.profileIds || [])) {
+      const profiles = getPermissionProfiles();
+      const allowedSet = new Set();
+      (data.profileIds || []).forEach(pid => {
+        const prof = profiles.find(pr => pr.id === pid);
+        if (prof && prof.allowedApis) {
+          prof.allowedApis.forEach(aid => allowedSet.add(aid));
+        }
+      });
+      allowedApis = Array.from(allowedSet);
+    }
+    const updated = { ...oldPartner, ...data, allowedApis };
+    partners[index] = updated;
+    savePartners(partners);
+    return updated;
+  }
+};
+
+export const deletePartner = async (id) => {
+  try {
+    await partnersApi.delete(id);
+  } catch {}
+  const partners = getPartnersLocal();
   const filtered = partners.filter(p => p.id !== id);
   savePartners(filtered);
 };

@@ -20,8 +20,10 @@ app.use(express.json());
 const JWT_SECRET = process.env.JWT_SECRET || 'PVI_SECRET_KEY_2026';
 
 // ===== KẾT NỐI DATABASE =====
-const sequelize = new Sequelize(process.env.DATABASE_URL || 'postgresql://postgres:password@localhost:5432/pvi_db', {
-  dialect: 'postgres',
+const dbUrl = process.env.DATABASE_URL || 'postgresql://postgres:password@localhost:5432/pvi_db';
+const dialect = dbUrl.startsWith('mysql') ? 'mysql' : 'postgres';
+const sequelize = new Sequelize(dbUrl, {
+  dialect,
   logging: false,
   dialectOptions: {
     ssl: process.env.NODE_ENV === 'production' ? { require: true, rejectUnauthorized: false } : false

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { getAccounts } from './services/localStorageService';
+import { authApi } from './services/api';
 
 export default function Login({ onLoginSuccess }) {
   const [email, setEmail] = useState('');
@@ -10,6 +11,22 @@ export default function Login({ onLoginSuccess }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+
+    try {
+      const data = await authApi.login(email, password);
+      const authData = {
+        token: data.token,
+        email,
+        role: data.role === 'ADMIN' ? 'admin' : 'partner',
+        name: data.name || email.split('@')[0].toUpperCase()
+      };
+      localStorage.setItem('token', authData.token);
+      localStorage.setItem('user_info', JSON.stringify(authData));
+      return onLoginSuccess(authData);
+    } catch (apiErr) {
+      // API không khả dụng → fallback localStorage
+      console.warn('API login failed, using localStorage fallback:', apiErr);
+    }
 
     const accounts = getAccounts();
     const matchedUser = accounts.find(acc => 

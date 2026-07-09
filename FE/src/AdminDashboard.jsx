@@ -15,15 +15,17 @@ export default function AdminDashboard() {
   const [initialSubTab, setInitialSubTab] = useState('profiles');
 
   useEffect(() => {
-    const accountsData = getAccounts();
-    const partnersData = getPartners();
-    const categoriesData = getPermissionCategories();
-    const groupsData = getApiGroups();
-    setAccounts(accountsData);
-    setPartners(partnersData);
-    setPermissionCategories(categoriesData);
-    setApiGroups(groupsData);
-    setLoading(false);
+    (async () => {
+      const [accountsData, partnersData] = await Promise.all([
+        getAccounts(),
+        getPartners()
+      ]);
+      setAccounts(accountsData);
+      setPartners(partnersData);
+      setPermissionCategories(getPermissionCategories());
+      setApiGroups(getApiGroups());
+      setLoading(false);
+    })();
   }, []);
 
   useEffect(() => {

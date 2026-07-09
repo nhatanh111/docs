@@ -26,60 +26,61 @@ export default function usePartnerDocs() {
   const [activeEndpoints, setActiveEndpoints] = useState([]);
 
   useEffect(() => {
-    const savedUser = localStorage.getItem('user_info');
-    if (!savedUser) {
-      setActiveEndpoints(DEFAULT_ENDPOINTS);
-      return;
-    }
-
-    try {
-      const user = JSON.parse(savedUser);
-      if (user.role === 'admin') {
+    (async () => {
+      const savedUser = localStorage.getItem('user_info');
+      if (!savedUser) {
         setActiveEndpoints(DEFAULT_ENDPOINTS);
         return;
       }
 
-      // Đối tác: Lọc theo Nhóm quyền tích hợp
-      const accounts = getAccounts();
-      const partners = getPartners();
-      const profiles = getPermissionProfiles();
-
-      const account = accounts.find(a => a.email.toLowerCase() === user.email.toLowerCase());
-      if (!account) {
-        setActiveEndpoints([]);
-        return;
-      }
-
-      const partner = partners.find(p => p.accountId === account.id);
-      if (!partner) {
-        setActiveEndpoints([]);
-        return;
-      }
-
-      if (partner.status !== 'active') {
-        setActiveEndpoints([]);
-        return;
-      }
-
-      const profileIds = partner.profileIds || (partner.profileId ? [partner.profileId] : []);
-      if (profileIds.length === 0) {
-        setActiveEndpoints([]);
-        return;
-      }
-
-      const allowedSet = new Set();
-      profileIds.forEach(pid => {
-        const prof = profiles.find(pr => pr.id === pid);
-        if (prof && prof.allowedApis) {
-          prof.allowedApis.forEach(aid => allowedSet.add(aid));
+      try {
+        const user = JSON.parse(savedUser);
+        if (user.role === 'admin') {
+          setActiveEndpoints(DEFAULT_ENDPOINTS);
+          return;
         }
-      });
-      const filtered = DEFAULT_ENDPOINTS.filter(ep => allowedSet.has(ep.id));
-      setActiveEndpoints(filtered);
-    } catch (e) {
-      console.error("Lỗi phân quyền:", e);
-      setActiveEndpoints(DEFAULT_ENDPOINTS);
-    }
+
+        const accounts = getAccounts();
+        const partners = await getPartners();
+        const profiles = getPermissionProfiles();
+
+        const account = accounts.find(a => a.email.toLowerCase() === user.email.toLowerCase());
+        if (!account) {
+          setActiveEndpoints([]);
+          return;
+        }
+
+        const partner = partners.find(p => p.accountId === account.id);
+        if (!partner) {
+          setActiveEndpoints([]);
+          return;
+        }
+
+        if (partner.status !== 'active') {
+          setActiveEndpoints([]);
+          return;
+        }
+
+        const profileIds = partner.profileIds || (partner.profileId ? [partner.profileId] : []);
+        if (profileIds.length === 0) {
+          setActiveEndpoints([]);
+          return;
+        }
+
+        const allowedSet = new Set();
+        profileIds.forEach(pid => {
+          const prof = profiles.find(pr => pr.id === pid);
+          if (prof && prof.allowedApis) {
+            prof.allowedApis.forEach(aid => allowedSet.add(aid));
+          }
+        });
+        const filtered = DEFAULT_ENDPOINTS.filter(ep => allowedSet.has(ep.id));
+        setActiveEndpoints(filtered);
+      } catch (e) {
+        console.error("Lỗi phân quyền:", e);
+        setActiveEndpoints(DEFAULT_ENDPOINTS);
+      }
+    })();
   }, []);
 
   useEffect(() => {

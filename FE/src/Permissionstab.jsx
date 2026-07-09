@@ -11,6 +11,7 @@ import {
   updatePermissionProfile,
   deletePermissionProfile,
   getPartners,
+  getPartnersLocal,
   savePartners,
   addUploadedEndpoints,
   deleteUploadedEndpoint,
@@ -747,7 +748,7 @@ export default function PermissionsTab({ partners, setPartners, accounts, initia
 
   // Helper update partner in local storage
   const updatePartnerProfile = (partnerId, data) => {
-    const allPartners = getPartners();
+    const allPartners = getPartnersLocal();
     const index = allPartners.findIndex(p => p.id === partnerId);
     if (index !== -1) {
       allPartners[index] = data;
