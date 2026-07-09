@@ -37,18 +37,6 @@ export default function SandboxPanel({
 
       {/* Code Generator */}
       <div className="space-y-3 border border-slate-200 bg-slate-50/50 p-3 rounded-2xl">
-        <div className="flex items-center justify-between font-sans">
-          <div className="text-[11px] uppercase text-slate-700 font-extrabold tracking-wider flex items-center gap-1.5">
-          </div>
-          <button
-            type="button"
-            onClick={handleCopyCode}
-            className="text-[10px] px-3 py-1 rounded-xl bg-slate-900 text-white hover:bg-slate-800 transition-all cursor-pointer border-0 font-bold shadow-sm"
-          >
-            {t('portal.labels.copy_code')}
-          </button>
-        </div>
-
         <div className="flex w-full max-w-full bg-[#f1f5f9] p-1 rounded-xl border border-slate-200 overflow-x-auto whitespace-nowrap gap-1 custom-scrollbar select-none">
           {SUPPORTED_LANGUAGES.map((lang) => (
             <button
@@ -65,6 +53,13 @@ export default function SandboxPanel({
               <span>{lang.name}</span>
             </button>
           ))}
+          <button
+            type="button"
+            onClick={handleCopyCode}
+            className="ml-auto flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-bold bg-slate-900 text-white hover:bg-slate-800 transition-all cursor-pointer border-0 shrink-0"
+          >
+            📋 {t('portal.labels.copy_code')}
+          </button>
         </div>
 
         <div className="bg-[#0f172a] rounded-xl border border-slate-800 shadow-xl max-w-full overflow-hidden relative">
