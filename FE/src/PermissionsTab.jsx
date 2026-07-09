@@ -1089,11 +1089,11 @@ export default function PermissionsTab({ partners, setPartners, accounts, initia
             <table className="w-full border-collapse text-sm">
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold text-[10px] uppercase">
-                  <th className="p-4 text-left w-8"></th>
                   <th className="p-4 text-left">Mã đối tác</th>
                   <th className="p-4 text-left">Tên Đối Tác</th>
                   <th className="p-4 text-left">Tài khoản liên kết</th>
                   <th className="p-4 text-left w-64">Nhóm quyền tích hợp (có thể chọn nhiều)</th>
+                  <th className="p-4 text-center w-8"></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -1108,11 +1108,6 @@ export default function PermissionsTab({ partners, setPartners, accounts, initia
                       onClick={() => setExpandedPartnerId(isExpanded ? null : p.id)}
                       className="hover:bg-slate-50/50 cursor-pointer"
                     >
-                      <td className="p-4 text-center w-6">
-                        <span className={`inline-flex items-center justify-center text-slate-200 text-[9px] transition-transform ${isExpanded ? 'rotate-90' : ''}`}>
-                          ▶
-                        </span>
-                      </td>
                       <td className="p-4 font-mono font-bold text-[11px] text-slate-500">
                         {String(parseInt(p.id.split('-')[1])).padStart(3, '0')}
                       </td>
@@ -1140,6 +1135,11 @@ export default function PermissionsTab({ partners, setPartners, accounts, initia
                             {partnerApis.length}
                           </span>
                         </div>
+                      </td>
+                      <td className="p-4 text-center w-6">
+                        <span className={`inline-flex items-center justify-center text-slate-200 text-[9px] transition-transform ${isExpanded ? 'rotate-90' : ''}`}>
+                          ▶
+                        </span>
                       </td>
                     </tr>
                     {isExpanded && (
