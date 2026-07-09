@@ -61,7 +61,7 @@ export default function SandboxPanel({
             onClick={handleCopyCode}
             className="absolute right-2 top-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold bg-white/10 text-white hover:bg-white/20 backdrop-blur-sm border border-white/10 cursor-pointer"
           >
-            📋 {t('portal.labels.copy_code')}
+            {t('portal.labels.copy_code')}
           </button>
           <pre className="w-full h-28 bg-[#0f172a] text-slate-300 font-mono text-[13px] leading-relaxed p-3 border-0 overflow-y-auto select-text custom-scrollbar resize-none text-left m-0 whitespace-pre-wrap">
             <CodeHighlighter
