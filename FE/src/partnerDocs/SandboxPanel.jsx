@@ -53,17 +53,17 @@ export default function SandboxPanel({
               <span>{lang.name}</span>
             </button>
           ))}
+        </div>
+
+        <div className="bg-[#0f172a] rounded-xl border border-slate-800 shadow-xl max-w-full overflow-hidden relative group">
           <button
             type="button"
             onClick={handleCopyCode}
-            className="ml-auto flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-bold bg-slate-900 text-white hover:bg-slate-800 transition-all cursor-pointer border-0 shrink-0"
+            className="absolute right-2 top-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold bg-white/10 text-white hover:bg-white/20 backdrop-blur-sm border border-white/10 cursor-pointer"
           >
             📋 {t('portal.labels.copy_code')}
           </button>
-        </div>
-
-        <div className="bg-[#0f172a] rounded-xl border border-slate-800 shadow-xl max-w-full overflow-hidden relative">
-          <pre className="w-full h-32 bg-[#0f172a] text-slate-300 font-mono text-[13px] leading-relaxed p-3 border-0 overflow-y-auto select-text custom-scrollbar resize-none text-left m-0 whitespace-pre-wrap">
+          <pre className="w-full h-28 bg-[#0f172a] text-slate-300 font-mono text-[13px] leading-relaxed p-3 border-0 overflow-y-auto select-text custom-scrollbar resize-none text-left m-0 whitespace-pre-wrap">
             <CodeHighlighter
               code={generateLanguageSnippet(selectedLang, currentActiveEp, requestBodies[currentActiveEp?.id])}
               lang={selectedLang}
