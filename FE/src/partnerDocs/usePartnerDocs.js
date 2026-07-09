@@ -5,8 +5,7 @@ import { cleanJsonString, clampValue } from './utils';
 import {
   getPartners,
   getAccounts,
-  getPermissionProfiles,
-  getUploadedEndpoints
+  getPermissionProfiles
 } from '../services/localStorageService';
 
 export default function usePartnerDocs() {
@@ -37,7 +36,7 @@ export default function usePartnerDocs() {
       try {
         const user = JSON.parse(savedUser);
         if (user.role === 'admin') {
-          setActiveEndpoints([...DEFAULT_ENDPOINTS, ...getUploadedEndpoints()]);
+          setActiveEndpoints(DEFAULT_ENDPOINTS);
           return;
         }
 
@@ -75,8 +74,7 @@ export default function usePartnerDocs() {
             prof.allowedApis.forEach(aid => allowedSet.add(aid));
           }
         });
-        const allApis = [...DEFAULT_ENDPOINTS, ...getUploadedEndpoints()];
-        const filtered = allApis.filter(ep => allowedSet.has(ep.id));
+        const filtered = DEFAULT_ENDPOINTS.filter(ep => allowedSet.has(ep.id));
         setActiveEndpoints(filtered);
       } catch (e) {
         console.error("Lỗi phân quyền:", e);

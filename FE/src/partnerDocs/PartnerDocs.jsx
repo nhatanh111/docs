@@ -14,6 +14,8 @@ export default function PartnerDocs() {
     apiResponses,
     setApiResponses,
     loadingStates,
+    selectedLang,
+    setSelectedLang,
     isFormMode,
     setIsFormMode,
     middleScrollRef,
@@ -42,6 +44,8 @@ export default function PartnerDocs() {
       />
       <SandboxPanel
         currentActiveEp={activeEndpoints.find(e => e.id === activeEpId) || activeEndpoints[0]}
+        selectedLang={selectedLang}
+        setSelectedLang={setSelectedLang}
         requestBodies={requestBodies}
         authToken={authToken}
         setAuthToken={setAuthToken}
