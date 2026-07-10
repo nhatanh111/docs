@@ -953,25 +953,21 @@ export default function PermissionsTab({ partners, setPartners, accounts, initia
 
                 {/* API Tree structure (Lazy Rendering & Auto-expand on search) */}
                 <div className="space-y-3 max-h-[500px] overflow-y-auto pr-1 custom-scrollbar">
-                  {(selectedProfile.allowedApis?.length > 0
-                    ? categories.filter(cat =>
-                        allEndpoints.some(ep =>
-                          (ep.category || "CHUNG") === cat && selectedProfile.allowedApis.includes(ep.id)
-                        )
-                      )
-                    : categories
-                  ).map(cat => {
+                  {categories.map(cat => {
                     const apis = allEndpoints.filter(ep => (ep.category || "CHUNG") === cat);
-                    
-                    // Lọc các API theo Search Query
+
+                    // Mặc định: chỉ show API đã được gán cho nhóm
+                    // Khi search: show toàn bộ API khớp để dễ thêm mới
                     const filteredApis = apis.filter(ep => {
-                      if (!apiSearchQuery) return true;
-                      const q = apiSearchQuery.toLowerCase();
-                      return (
-                        ep.path?.toLowerCase().includes(q) ||
-                        t(ep.description)?.toLowerCase().includes(q) ||
-                        ep.method?.toLowerCase().includes(q)
-                      );
+                      if (apiSearchQuery) {
+                        const q = apiSearchQuery.toLowerCase();
+                        return (
+                          ep.path?.toLowerCase().includes(q) ||
+                          t(ep.description)?.toLowerCase().includes(q) ||
+                          ep.method?.toLowerCase().includes(q)
+                        );
+                      }
+                      return selectedProfile.allowedApis?.includes(ep.id);
                     });
 
                     // Nếu không có API nào khớp trong danh mục này, ẩn luôn danh mục đó
