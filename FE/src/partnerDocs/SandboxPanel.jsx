@@ -62,7 +62,7 @@ export default function SandboxPanel({
           >
             {t('portal.labels.copy_code')}
           </button>
-          <pre className="w-full h-28 bg-[#0f172a] text-slate-300 font-mono text-[13px] leading-relaxed p-3 border-0 overflow-y-auto select-text custom-scrollbar resize-none text-left m-0 whitespace-pre-wrap">
+          <pre className="w-full h-28 bg-[#0f172a] text-slate-300 font-mono text-[11px] leading-relaxed p-3 border-0 overflow-y-auto select-text custom-scrollbar resize-none text-left m-0 whitespace-pre-wrap">
             <CodeHighlighter
               code={generateLanguageSnippet(selectedLang, currentActiveEp, requestBodies[currentActiveEp?.id])}
               lang={selectedLang}
