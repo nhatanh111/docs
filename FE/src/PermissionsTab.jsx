@@ -561,6 +561,14 @@ export default function PermissionsTab({ partners, setPartners, accounts, initia
   const [partnerApiSearch, setPartnerApiSearch] = useState('');
   const [uploadedVersion, setUploadedVersion] = useState(0);
 
+  // Core APIs của profile — không được tắt (được seed từ đầu)
+  const coreApiIds = useRef(new Set());
+
+  useEffect(() => {
+    const profile = profiles.find(p => p.id === selectedProfileId);
+    coreApiIds.current = new Set(profile?.allowedApis || []);
+  }, [selectedProfileId, profiles]);
+
   // Accordion categories (sub-tab 1)
   const [expandedCategories, setExpandedCategories] = useState({});
   // Accordion categories per partner (sub-tab 2)
@@ -1055,7 +1063,10 @@ export default function PermissionsTab({ partners, setPartners, accounts, initia
                                     <button
                                       type="button"
                                       onClick={() => handleToggleApi(selectedProfile.id, ep.id)}
-                                      className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                                      disabled={coreApiIds.current.has(ep.id)}
+                                      className={`relative inline-flex h-5 w-10 shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                                        coreApiIds.current.has(ep.id) ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'
+                                      } ${
                                         selectedProfile.allowedApis?.includes(ep.id) ? 'bg-emerald-500' : 'bg-slate-200'
                                       }`}
                                     >
