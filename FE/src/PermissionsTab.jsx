@@ -1055,7 +1055,19 @@ export default function PermissionsTab({ partners, setPartners, accounts, initia
                                   </div>
 
                                   <div className="flex items-center gap-1">
-                                    <span className="text-[9px] bg-emerald-100 text-emerald-700 font-bold px-1.5 py-0.5 rounded-full">✓</span>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleToggleApi(selectedProfile.id, ep.id)}
+                                      className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                                        selectedProfile.allowedApis?.includes(ep.id) ? 'bg-emerald-500' : 'bg-slate-200'
+                                      }`}
+                                    >
+                                      <span
+                                        className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                                          selectedProfile.allowedApis?.includes(ep.id) ? 'translate-x-5' : 'translate-x-0'
+                                        }`}
+                                      />
+                                    </button>
                                   </div>
                                 </div>
                             ))}
