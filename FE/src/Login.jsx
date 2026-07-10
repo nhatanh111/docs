@@ -57,9 +57,12 @@ export default function Login({ onLoginSuccess }) {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-slate-900">
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-950 via-slate-900 to-slate-950 z-0" />
-      <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)', backgroundSize: '40px 40px' }} />
+    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
+      <img 
+        src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=2070&auto=format&fit=crop" 
+        alt="PVI Building" 
+        className="absolute inset-0 w-full h-full object-cover object-center z-0"
+      />
       
       <form 
         onSubmit={handleSubmit} 
