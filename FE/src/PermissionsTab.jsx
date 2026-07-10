@@ -950,8 +950,8 @@ export default function PermissionsTab({ partners, setPartners, accounts, initia
                     type="text"
                     placeholder="🔍 Tìm nhanh API (đường dẫn, tên nghiệp vụ, method...)"
                     value={apiSearchQuery}
-                    onChange={(e) => { setApiSearchQuery(e.target.value); setShowSuggestions(true); }}
-                    onFocus={() => setShowSuggestions(true)}
+                    onChange={(e) => { setApiSearchQuery(e.target.value); if (e.target.value) setShowSuggestions(true); }}
+                    onFocus={() => { if (apiSearchQuery) setShowSuggestions(true); }}
                     className="w-full border border-slate-200 bg-slate-50/50 rounded-xl px-4 py-2 pl-10 text-xs outline-none focus:border-blue-400 focus:bg-white transition-all shadow-inner"
                   />
                   <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
