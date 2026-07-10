@@ -1001,18 +1001,14 @@ export default function PermissionsTab({ partners, setPartners, accounts, initia
                   {categories.map(cat => {
                     const apis = allEndpoints.filter(ep => (ep.category || "CHUNG") === cat);
 
-                    // Mặc định: chỉ show API đã được gán cho nhóm
-                    // Khi search: show toàn bộ API khớp để dễ thêm mới
                     const filteredApis = apis.filter(ep => {
-                      if (apiSearchQuery) {
-                        const q = apiSearchQuery.toLowerCase();
-                        return (
-                          ep.path?.toLowerCase().includes(q) ||
-                          t(ep.description)?.toLowerCase().includes(q) ||
-                          ep.method?.toLowerCase().includes(q)
-                        );
-                      }
-                      return selectedProfile.allowedApis?.includes(ep.id);
+                      if (!apiSearchQuery) return true;
+                      const q = apiSearchQuery.toLowerCase();
+                      return (
+                        ep.path?.toLowerCase().includes(q) ||
+                        t(ep.description)?.toLowerCase().includes(q) ||
+                        ep.method?.toLowerCase().includes(q)
+                      );
                     });
 
                     // Nếu không có API nào khớp trong danh mục này, ẩn luôn danh mục đó
@@ -1020,6 +1016,7 @@ export default function PermissionsTab({ partners, setPartners, accounts, initia
 
                     // Auto-expand danh mục khi có kết quả search để hiển thị API khớp
                     const isExpanded = apiSearchQuery ? true : !!expandedCategories[cat];
+                    const allowedCount = filteredApis.filter(ep => selectedProfile.allowedApis?.includes(ep.id)).length;
 
                     return (
                       <div key={cat} className="border border-slate-100 rounded-xl overflow-hidden shadow-sm bg-[#fafafa]/50">
@@ -1032,7 +1029,7 @@ export default function PermissionsTab({ partners, setPartners, accounts, initia
                             <span className={`text-slate-400 transition-transform ${isExpanded ? 'rotate-90' : ''}`}>▶</span>
                             <span className="font-bold text-slate-700 text-xs uppercase tracking-wider">{t(cat)}</span>
                             <span className="text-[10px] font-bold bg-blue-100 text-blue-800 px-1.5 py-0.2 rounded-full">
-                              {filteredApis.length}
+                              {allowedCount} / {filteredApis.length}
                             </span>
                           </div>
                         </div>
