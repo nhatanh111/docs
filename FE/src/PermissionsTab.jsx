@@ -959,7 +959,7 @@ export default function PermissionsTab({ partners, setPartners, accounts, initia
                     </button>
                   )}
 
-                  {/* Suggestions dropdown */}
+                  {/* Suggestions dropdown — chỉ show tên category, click để thêm toàn bộ API của category đó */}
                   {showSuggestions && selectedProfile && (() => {
                     const unassignedApis = allEndpoints.filter(ep => !selectedProfile.allowedApis?.includes(ep.id));
                     const suggestions = apiSearchQuery
@@ -980,21 +980,15 @@ export default function PermissionsTab({ partners, setPartners, accounts, initia
                           <div className="p-4 text-xs text-slate-400 text-center italic">Không tìm thấy API nào</div>
                         ) : (
                           Object.entries(grouped).map(([cat, eps]) => (
-                            <div key={cat}>
-                              <div className="px-3 py-1.5 bg-slate-50 text-[10px] font-bold text-slate-500 uppercase tracking-wider border-b border-slate-100 sticky top-0">{t(cat)}</div>
-                              {eps.map(ep => (
-                                <button
-                                  key={ep.id}
-                                  type="button"
-                                  onClick={() => { handleToggleApi(selectedProfile.id, ep.id); setShowSuggestions(false); }}
-                                  className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left hover:bg-blue-50 transition-colors border-b border-slate-50 last:border-0 cursor-pointer bg-transparent"
-                                >
-                                  <span className={`text-[8px] px-1.5 py-0.5 rounded font-black text-white shrink-0 ${methodBadgeClass(ep.method)}`}>{ep.method}</span>
-                                  <span className="font-mono text-slate-700 font-semibold truncate flex-1">{ep.path}</span>
-                                  <span className="text-[10px] text-blue-600 font-bold shrink-0">+ Thêm</span>
-                                </button>
-                              ))}
-                            </div>
+                            <button
+                              key={cat}
+                              type="button"
+                              onClick={() => { eps.forEach(ep => { if (!selectedProfile.allowedApis?.includes(ep.id)) handleToggleApi(selectedProfile.id, ep.id); }); setShowSuggestions(false); }}
+                              className="w-full flex items-center justify-between px-4 py-2.5 text-xs text-left hover:bg-blue-50 transition-colors border-b border-slate-100 last:border-0 cursor-pointer bg-transparent"
+                            >
+                              <span className="font-bold text-slate-700">{t(cat)}</span>
+                              <span className="text-[10px] text-blue-600 font-bold">+{eps.length}</span>
+                            </button>
                           ))
                         )}
                       </div>
