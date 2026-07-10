@@ -1186,18 +1186,17 @@ export default function PermissionsTab({ partners, setPartners, accounts, initia
                               )}
                             </div>
 
-                            {partnerApis.length === 0 && !partnerApiSearch ? (
-                              <div className="text-center py-3 text-[11px] text-slate-400 italic">Đối tác chưa được cấp API nào</div>
+                            {allEndpoints.length === 0 ? (
+                              <div className="text-center py-3 text-[11px] text-slate-400 italic">Chưa có API nào</div>
                             ) : (
                               <div className="space-y-2 max-h-[300px] overflow-y-auto">
                                 {groupByCategory(allEndpoints).map(({ category: cat, apis }) => {
                                   const allowedIds = p.allowedApis || [];
-                                  const filteredApis = partnerApiSearch
-                                    ? apis.filter(ep => {
-                                        const q = partnerApiSearch.toLowerCase();
-                                        return ep.path?.toLowerCase().includes(q) || t(ep.description)?.toLowerCase().includes(q) || ep.method?.toLowerCase().includes(q);
-                                      })
-                                    : apis.filter(ep => allowedIds.includes(ep.id));
+                                  const filteredApis = apis.filter(ep => {
+                                    if (!partnerApiSearch) return true;
+                                    const q = partnerApiSearch.toLowerCase();
+                                    return ep.path?.toLowerCase().includes(q) || t(ep.description)?.toLowerCase().includes(q) || ep.method?.toLowerCase().includes(q);
+                                  });
                                   if (filteredApis.length === 0) return null;
                                   const visibleAllowed = filteredApis.filter(ep => allowedIds.includes(ep.id)).length;
                                   const isAllSelected = visibleAllowed === filteredApis.length;
