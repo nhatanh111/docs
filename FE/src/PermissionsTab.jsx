@@ -1018,11 +1018,8 @@ export default function PermissionsTab({ partners, setPartners, accounts, initia
                     // Nếu không có API nào khớp trong danh mục này, ẩn luôn danh mục đó
                     if (filteredApis.length === 0) return null;
 
-                    const allowedCount = filteredApis.filter(ep => selectedProfile.allowedApis?.includes(ep.id)).length;
-                    
                     // Auto-expand danh mục khi có kết quả search để hiển thị API khớp
                     const isExpanded = apiSearchQuery ? true : !!expandedCategories[cat];
-                    const isAllSelected = allowedCount === filteredApis.length;
 
                     return (
                       <div key={cat} className="border border-slate-100 rounded-xl overflow-hidden shadow-sm bg-[#fafafa]/50">
@@ -1035,31 +1032,15 @@ export default function PermissionsTab({ partners, setPartners, accounts, initia
                             <span className={`text-slate-400 transition-transform ${isExpanded ? 'rotate-90' : ''}`}>▶</span>
                             <span className="font-bold text-slate-700 text-xs uppercase tracking-wider">{t(cat)}</span>
                             <span className="text-[10px] font-bold bg-blue-100 text-blue-800 px-1.5 py-0.2 rounded-full">
-                              {allowedCount} / {filteredApis.length}
+                              {filteredApis.length}
                             </span>
-                          </div>
-
-                          <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
-                            <button
-                              type="button"
-                              onClick={() => handleToggleCategoryAll(selectedProfile.id, cat, isAllSelected ? 'deny' : 'allow')}
-                              className={`text-[10px] font-bold px-2.5 py-1 rounded-lg border cursor-pointer transition-all ${
-                                isAllSelected
-                                  ? 'bg-rose-50 text-rose-600 border-rose-200 hover:bg-rose-100'
-                                  : 'bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100'
-                              }`}
-                            >
-                              {isAllSelected ? 'Bỏ chọn hết' : 'Chọn hết'}
-                            </button>
                           </div>
                         </div>
 
                         {/* Category endpoint list - Lazy mounted for dom performance */}
                         {isExpanded && (
                           <div className="divide-y divide-slate-100 bg-white border-t border-slate-100">
-                            {filteredApis.map(ep => {
-                              const isAllowed = selectedProfile.allowedApis?.includes(ep.id);
-                              return (
+                            {filteredApis.map(ep => (
                                 <div key={ep.id} className="p-3 flex items-center justify-between gap-4 hover:bg-slate-50/30">
                                   <div className="min-w-0 flex-1">
                                     <div className="flex items-center gap-2">
@@ -1074,40 +1055,10 @@ export default function PermissionsTab({ partners, setPartners, accounts, initia
                                   </div>
 
                                   <div className="flex items-center gap-1">
-                                    {/* Delete uploaded API button */}
-                                    {!DEFAULT_ENDPOINTS.some(d => d.id === ep.id) && (
-                                      <button
-                                        type="button"
-                                        onClick={() => {
-                                          if (!window.confirm(`Xóa API "${ep.path}" khỏi danh sách đã upload?`)) return;
-                                          deleteUploadedEndpoint(ep.id);
-                                          setUploadNotification({ type: 'success', message: `✅ Đã xóa API "${ep.path}"` });
-                                        }}
-                                        className="p-1 rounded text-slate-300 hover:bg-red-50 hover:text-red-500 border-0 bg-transparent cursor-pointer transition-colors"
-                                        title="Xóa API đã upload"
-                                      >
-                                        🗑️
-                                      </button>
-                                    )}
-
-                                    {/* Toggle Switch */}
-                                    <button
-                                      type="button"
-                                      onClick={() => handleToggleApi(selectedProfile.id, ep.id)}
-                                      className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                                        isAllowed ? 'bg-emerald-500' : 'bg-slate-200'
-                                      }`}
-                                    >
-                                      <span
-                                        className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                                          isAllowed ? 'translate-x-5' : 'translate-x-0'
-                                        }`}
-                                      />
-                                    </button>
+                                    <span className="text-[9px] bg-emerald-100 text-emerald-700 font-bold px-1.5 py-0.5 rounded-full">✓</span>
                                   </div>
                                 </div>
-                              );
-                            })}
+                            ))}
                           </div>
                         )}
                       </div>
