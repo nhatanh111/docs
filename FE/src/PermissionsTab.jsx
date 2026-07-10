@@ -537,6 +537,14 @@ export default function PermissionsTab({ partners, setPartners, accounts, initia
   
   // States cho Profile API Search
   const [apiSearchQuery, setApiSearchQuery] = useState('');
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const searchRef = useRef(null);
+
+  useEffect(() => {
+    const handler = (e) => { if (searchRef.current && !searchRef.current.contains(e.target)) setShowSuggestions(false); };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
   
   // States cho Profile Modal
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -929,12 +937,13 @@ export default function PermissionsTab({ partners, setPartners, accounts, initia
                 </div>
 
                 {/* API Search box for 1000+ API Scalability */}
-                <div className="relative">
+                <div className="relative" ref={searchRef}>
                   <input
                     type="text"
                     placeholder="🔍 Tìm nhanh API (đường dẫn, tên nghiệp vụ, method...)"
                     value={apiSearchQuery}
-                    onChange={(e) => setApiSearchQuery(e.target.value)}
+                    onChange={(e) => { setApiSearchQuery(e.target.value); setShowSuggestions(true); }}
+                    onFocus={() => setShowSuggestions(true)}
                     className="w-full border border-slate-200 bg-slate-50/50 rounded-xl px-4 py-2 pl-10 text-xs outline-none focus:border-blue-400 focus:bg-white transition-all shadow-inner"
                   />
                   <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -949,6 +958,48 @@ export default function PermissionsTab({ partners, setPartners, accounts, initia
                       ✕ xóa lọc
                     </button>
                   )}
+
+                  {/* Suggestions dropdown */}
+                  {showSuggestions && selectedProfile && (() => {
+                    const unassignedApis = allEndpoints.filter(ep => !selectedProfile.allowedApis?.includes(ep.id));
+                    const suggestions = apiSearchQuery
+                      ? unassignedApis.filter(ep => {
+                          const q = apiSearchQuery.toLowerCase();
+                          return ep.path?.toLowerCase().includes(q) || t(ep.description)?.toLowerCase().includes(q) || ep.method?.toLowerCase().includes(q);
+                        })
+                      : unassignedApis;
+                    const grouped = {};
+                    suggestions.forEach(ep => {
+                      const cat = ep.category || 'CHUNG';
+                      if (!grouped[cat]) grouped[cat] = [];
+                      grouped[cat].push(ep);
+                    });
+                    return (
+                      <div className="absolute z-50 mt-1 w-full bg-white border border-slate-200 rounded-xl shadow-xl max-h-64 overflow-y-auto">
+                        {Object.keys(grouped).length === 0 ? (
+                          <div className="p-4 text-xs text-slate-400 text-center italic">Không tìm thấy API nào</div>
+                        ) : (
+                          Object.entries(grouped).map(([cat, eps]) => (
+                            <div key={cat}>
+                              <div className="px-3 py-1.5 bg-slate-50 text-[10px] font-bold text-slate-500 uppercase tracking-wider border-b border-slate-100 sticky top-0">{t(cat)}</div>
+                              {eps.map(ep => (
+                                <button
+                                  key={ep.id}
+                                  type="button"
+                                  onClick={() => { handleToggleApi(selectedProfile.id, ep.id); setShowSuggestions(false); }}
+                                  className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left hover:bg-blue-50 transition-colors border-b border-slate-50 last:border-0 cursor-pointer bg-transparent"
+                                >
+                                  <span className={`text-[8px] px-1.5 py-0.5 rounded font-black text-white shrink-0 ${methodBadgeClass(ep.method)}`}>{ep.method}</span>
+                                  <span className="font-mono text-slate-700 font-semibold truncate flex-1">{ep.path}</span>
+                                  <span className="text-[10px] text-blue-600 font-bold shrink-0">+ Thêm</span>
+                                </button>
+                              ))}
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    );
+                  })()}
                 </div>
 
                 {/* API Tree structure (Lazy Rendering & Auto-expand on search) */}
