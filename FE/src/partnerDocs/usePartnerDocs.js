@@ -8,6 +8,23 @@ import {
   getPermissionProfiles
 } from '../services/localStorageService';
 
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
+async function fetchUploadedEndpoints() {
+  try {
+    const token = localStorage.getItem('token');
+    const res = await fetch(`${API_BASE}/api/documents/uploaded`, {
+      headers: {
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+      },
+    });
+    if (!res.ok) return [];
+    return await res.json();
+  } catch {
+    return [];
+  }
+}
+
 export default function usePartnerDocs() {
   const [activeEpId, setActiveEpId] = useState(null);
   const [authToken, setAuthToken] = useState('pvi_secret_access_key_2026');
@@ -16,6 +33,7 @@ export default function usePartnerDocs() {
   const [loadingStates, setLoadingStates] = useState({});
   const [selectedLang, setSelectedLang] = useState('curl');
   const [isFormMode, setIsFormMode] = useState(true);
+  const [uploadedEndpoints, setUploadedEndpoints] = useState([]);
 
   const middleScrollRef = useRef(null);
   const sidebarScrollRef = useRef(null);
@@ -25,18 +43,33 @@ export default function usePartnerDocs() {
 
   const [activeEndpoints, setActiveEndpoints] = useState([]);
 
+  const mergeEndpoints = useCallback((defaultEps, uploadedEps) => {
+    const merged = [...defaultEps];
+    const existingIds = new Set(defaultEps.map(ep => ep.id));
+    uploadedEps.forEach(ep => {
+      if (!existingIds.has(ep.id)) {
+        merged.push(ep);
+        existingIds.add(ep.id);
+      }
+    });
+    return merged;
+  }, []);
+
   useEffect(() => {
     (async () => {
+      const uploaded = await fetchUploadedEndpoints();
+      setUploadedEndpoints(uploaded);
+
       const savedUser = localStorage.getItem('user_info');
       if (!savedUser) {
-        setActiveEndpoints(DEFAULT_ENDPOINTS);
+        setActiveEndpoints(mergeEndpoints(DEFAULT_ENDPOINTS, uploaded));
         return;
       }
 
       try {
         const user = JSON.parse(savedUser);
         if (user.role === 'admin') {
-          setActiveEndpoints(DEFAULT_ENDPOINTS);
+          setActiveEndpoints(mergeEndpoints(DEFAULT_ENDPOINTS, uploaded));
           return;
         }
 
@@ -75,13 +108,13 @@ export default function usePartnerDocs() {
           }
         });
         const filtered = DEFAULT_ENDPOINTS.filter(ep => allowedSet.has(ep.id));
-        setActiveEndpoints(filtered);
+        setActiveEndpoints(mergeEndpoints(filtered, uploaded));
       } catch (e) {
         console.error("Lỗi phân quyền:", e);
-        setActiveEndpoints(DEFAULT_ENDPOINTS);
+        setActiveEndpoints(mergeEndpoints(DEFAULT_ENDPOINTS, uploaded));
       }
     })();
-  }, []);
+  }, [mergeEndpoints]);
 
   useEffect(() => {
     const initialBodies = {};
@@ -168,27 +201,39 @@ export default function usePartnerDocs() {
     }
   };
 
-  const handleExecuteSandbox = (id, responseFormat) => {
+  const handleExecuteSandbox = async (id, responseFormat) => {
     if (!id) return;
     setLoadingStates(prev => ({ ...prev, [id]: true }));
-    let finalResponse = { Status: "00", Message: "Giao dịch giả lập thành công." };
-    if (responseFormat) {
-      try { finalResponse = typeof responseFormat === 'string' ? JSON.parse(cleanJsonString(responseFormat)) : { ...responseFormat }; }
-      catch (e) { finalResponse = { Status: "00", Message: "Giao dịch thành công.", Data: responseFormat }; }
-    }
     try {
-      const currentBody = JSON.parse(requestBodies[id] || '{}');
-      Object.keys(currentBody).forEach(key => {
-        if (VALIDATION_LIMITS[key] && currentBody[key] !== undefined) {
-          const validNum = clampValue(key, currentBody[key]);
-          if (key === 'TongPhi' && finalResponse.TotalFee !== undefined) finalResponse.TotalFee = validNum;
-        }
+      const currentEp = activeEndpoints.find(e => e.id === id);
+      let requestBody = {};
+      try {
+        requestBody = JSON.parse(requestBodies[id] || '{}');
+      } catch (e) {
+        requestBody = {};
+      }
+      const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${API_BASE}/api/sandbox/execute`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({
+          endpointId: id,
+          method: currentEp?.method || 'POST',
+          path: currentEp?.path || '',
+          requestBody
+        })
       });
-    } catch(e) {}
-    setTimeout(() => {
-      setApiResponses(prev => ({ ...prev, [id]: finalResponse }));
+      const data = await res.json();
+      setApiResponses(prev => ({ ...prev, [id]: data.data || data }));
+    } catch (err) {
+      setApiResponses(prev => ({ ...prev, [id]: { status: 'error', message: err.message } }));
+    } finally {
       setLoadingStates(prev => ({ ...prev, [id]: false }));
-    }, 350);
+    }
   };
 
   const scrollToApi = useCallback((id) => {
@@ -200,6 +245,42 @@ export default function usePartnerDocs() {
     element.scrollIntoView({ behavior: 'smooth', block: 'start' });
     setTimeout(() => { isClickScrolling.current = false; }, 800);
   }, [scrollSidebarToActive]);
+
+  const refreshUploadedEndpoints = useCallback(async () => {
+    const uploaded = await fetchUploadedEndpoints();
+    setUploadedEndpoints(uploaded);
+
+    const savedUser = localStorage.getItem('user_info');
+    if (!savedUser) {
+      setActiveEndpoints(mergeEndpoints(DEFAULT_ENDPOINTS, uploaded));
+      return;
+    }
+
+    try {
+      const user = JSON.parse(savedUser);
+      if (user.role === 'admin') {
+        setActiveEndpoints(mergeEndpoints(DEFAULT_ENDPOINTS, uploaded));
+        return;
+      }
+      const accounts = getAccounts();
+      const partners = await getPartners();
+      const profiles = getPermissionProfiles();
+      const account = accounts.find(a => a.email.toLowerCase() === user.email.toLowerCase());
+      if (!account) { setActiveEndpoints([]); return; }
+      const partner = partners.find(p => p.accountId === account.id);
+      if (!partner || partner.status !== 'active') { setActiveEndpoints([]); return; }
+      const profileIds = partner.profileIds || (partner.profileId ? [partner.profileId] : []);
+      const allowedSet = new Set();
+      profileIds.forEach(pid => {
+        const prof = profiles.find(pr => pr.id === pid);
+        if (prof && prof.allowedApis) prof.allowedApis.forEach(aid => allowedSet.add(aid));
+      });
+      const filtered = DEFAULT_ENDPOINTS.filter(ep => allowedSet.has(ep.id));
+      setActiveEndpoints(mergeEndpoints(filtered, uploaded));
+    } catch {
+      setActiveEndpoints(mergeEndpoints(DEFAULT_ENDPOINTS, uploaded));
+    }
+  }, [mergeEndpoints]);
 
   const categories = Array.from(new Set(activeEndpoints.map(e => e.category || "CHUNG")));
 
@@ -225,5 +306,6 @@ export default function usePartnerDocs() {
     handleExecuteSandbox,
     scrollToApi,
     categories,
+    refreshUploadedEndpoints,
   };
 }

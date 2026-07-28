@@ -33,6 +33,24 @@
     }
   },
   {
+    "id": "api-health-claim",
+    "category": "portal.categories.health",
+    "method": "POST",
+    "path": "/api/pvi/v1/health/claim",
+    "description": "portal.endpoints.health_claim",
+    "requestSample": {
+      "CpId": "nguyen van a",
+      "so_gcn": "GCN/HEALTH/2026/001",
+      "soTienYeuCau": 5000000,
+      "lyDo": "Viem hong cap"
+    },
+    "responseFormat": {
+      "Status": "00",
+      "Message": "Tiep nhan yeu cau boi thuong thanh cong",
+      "Data": { "maHoSo": "HS/HEALTH/2026/001" }
+    }
+  },
+  {
     "id": "api-property-insure",
     "category": "portal.categories.property",
     "method": "POST",
@@ -47,6 +65,59 @@
       "Status": "00",
       "Message": "Cap don bao hiem tai san thanh cong",
       "Data": { "so_gcn": "GCN/PROP/2026/001", "PhiBaoHiem": 25000000 }
+    }
+  },
+  {
+    "id": "api-property-query",
+    "category": "portal.categories.property",
+    "method": "POST",
+    "path": "/api/pvi/v1/property/query",
+    "description": "portal.endpoints.property_query",
+    "requestSample": {
+      "CpId": "nguyen van a",
+      "so_gcn": "GCN/PROP/2026/001"
+    },
+    "responseFormat": {
+      "Status": "00",
+      "Message": "Tra cuu thanh cong",
+      "Data": {
+        "TrangThai": "ACTIVE",
+        "NgayHetHan": "03/07/2027",
+        "GiaTriTaiSan": 5000000000
+      }
+    }
+  },
+  {
+    "id": "api-property-cancel",
+    "category": "portal.categories.property",
+    "method": "POST",
+    "path": "/api/pvi/v1/property/cancel",
+    "description": "portal.endpoints.property_cancel",
+    "requestSample": {
+      "CpId": "nguyen van a",
+      "so_gcn": "GCN/PROP/2026/001",
+      "lyDo": "Chuyen nhuong tai san"
+    },
+    "responseFormat": {
+      "Status": "00",
+      "Message": "Huy don bao hiem tai san thanh cong"
+    }
+  },
+  {
+    "id": "api-accident-register",
+    "category": "portal.categories.accident",
+    "method": "POST",
+    "path": "/api/pvi/v1/accident/register",
+    "description": "portal.endpoints.accident_register",
+    "requestSample": {
+      "CpId": "nguyen van a",
+      "TenKH": "Le Van C",
+      "GoiBaoHiem": "ACCIDENT_SILVER"
+    },
+    "responseFormat": {
+      "Status": "00",
+      "Message": "Dang ky bao hiem tai nan thanh cong",
+      "Data": { "so_gcn": "GCN/ACCIDENT/2026/001" }
     }
   }
 ]

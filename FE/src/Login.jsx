@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { getAccounts } from './services/localStorageService';
+import { verifyAccountPassword } from './services/localStorageService';
 import { authApi } from './services/api';
 
 export default function Login({ onLoginSuccess }) {
@@ -26,14 +26,10 @@ export default function Login({ onLoginSuccess }) {
       localStorage.setItem('user_info', JSON.stringify(authData));
       return onLoginSuccess(authData);
     } catch (apiErr) {
-      console.warn('API login failed, using localStorage fallback:', apiErr);
+      // Fallback: localStorage
     }
 
-    const accounts = getAccounts();
-    const matchedUser = accounts.find(acc => 
-      acc.email.trim().toLowerCase() === email.trim().toLowerCase() && 
-      String(acc.password).trim() === password.trim()
-    );
+    const matchedUser = await verifyAccountPassword(email, password);
 
     setLoading(false);
 
@@ -69,13 +65,8 @@ export default function Login({ onLoginSuccess }) {
         className="bg-white/95 backdrop-blur-md p-8 rounded-2xl shadow-[0_25px_60px_rgba(0,0,0,0.5)] w-full max-w-sm border border-white/10 relative z-20"
       >
         <div className="text-center mb-8">
-          <div className="w-14 h-14 mx-auto mb-4 bg-gradient-to-br from-blue-600 to-blue-800 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-600/30">
-            <svg className="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 5.25h16.5m-16.5 4.5h16.5m-16.5 4.5h16.5m-16.5 4.5h16.5" />
-            </svg>
-          </div>
           <h2 className="text-2xl font-extrabold tracking-tight text-slate-900">
-            PVI Portal
+            PVI API Docs
           </h2>
           <p className="text-slate-400 text-xs font-medium mt-1">
             Đăng nhập hệ thống phân quyền

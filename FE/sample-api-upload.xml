@@ -13,4 +13,39 @@
     <path>/api/pvi/v1/health/query</path>
     <description>Tra cứu bảo hiểm sức khỏe</description>
   </endpoint>
+  <endpoint>
+    <id>api-health-claim</id>
+    <category>portal.categories.health</category>
+    <method>POST</method>
+    <path>/api/pvi/v1/health/claim</path>
+    <description>Khai báo bồi thường bảo hiểm sức khỏe</description>
+  </endpoint>
+  <endpoint>
+    <id>api-property-insure</id>
+    <category>portal.categories.property</category>
+    <method>POST</method>
+    <path>/api/pvi/v1/property/insure</path>
+    <description>Đăng ký bảo hiểm tài sản</description>
+  </endpoint>
+  <endpoint>
+    <id>api-property-query</id>
+    <category>portal.categories.property</category>
+    <method>POST</method>
+    <path>/api/pvi/v1/property/query</path>
+    <description>Tra cứu bảo hiểm tài sản</description>
+  </endpoint>
+  <endpoint>
+    <id>api-property-cancel</id>
+    <category>portal.categories.property</category>
+    <method>POST</method>
+    <path>/api/pvi/v1/property/cancel</path>
+    <description>Hủy bảo hiểm tài sản</description>
+  </endpoint>
+  <endpoint>
+    <id>api-accident-register</id>
+    <category>portal.categories.accident</category>
+    <method>POST</method>
+    <path>/api/pvi/v1/accident/register</path>
+    <description>Đăng ký bảo hiểm tai nạn</description>
+  </endpoint>
 </endpoints>

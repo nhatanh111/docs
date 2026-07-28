@@ -1,0 +1,89 @@
+[
+  {
+    "id": "api-example",
+    "category": "Tên danh mục",
+    "method": "POST",
+    "path": "/api/v1/duong-dan/endpoint",
+    "name": "Tên hiển thị của API",
+    "description": "Mô tả chi tiết chức năng của API",
+    "requestSample": {
+      "stringField": "chuỗi văn bản",
+      "numberField": 1000000,
+      "booleanField": true,
+      "enumField": "ACTIVE",
+      "dateField": "01/07/2026",
+      "datetimeField": "01/07/2026 15:30:00",
+      "objectField": {
+        "subString": "giá trị con",
+        "subNumber": 500000,
+        "subBoolean": false
+      },
+      "arrayField": [
+        {
+          "itemCode": "ITEM001",
+          "itemName": "Tên item",
+          "itemQuantity": 2,
+          "itemPrice": 250000
+        }
+      ],
+      "nestedArrayField": [
+        {
+          "device": {
+            "type": "Refrigerator",
+            "brand": "AQUA",
+            "imei": "123456789012345"
+          }
+        }
+      ]
+    },
+    "responseFormat": {
+      "status": "00",
+      "message": "Thành công",
+      "errorCode": null,
+      "data": {
+        "id": "f61ccf05-e9bd-4f7b-91b0-85b90dc6bc8d",
+        "totalAmount": 500000,
+        "paymentStatus": true,
+        "contractStatus": "PAID",
+        "paidAt": "2026-06-28T09:38:29+07:00",
+        "items": [
+          {
+            "code": "ITEM001",
+            "name": "Tên item",
+            "quantity": 2,
+            "price": 250000
+          }
+        ],
+        "certificateUrl": "https://certificate.pvi.com.vn/ABC/12345"
+      }
+    },
+    "fields": [
+      { "name": "stringField", "type": "String", "required": true, "description": "Field dạng chuỗi văn bản" },
+      { "name": "numberField", "type": "Number", "required": true, "description": "Field dạng số (nguyên hoặc thập phân)" },
+      { "name": "booleanField", "type": "Boolean", "required": true, "description": "Field dạng true/false" },
+      { "name": "enumField", "type": "Enum (ACTIVE/INACTIVE/PENDING)", "required": true, "description": "Field liệt kê các giá trị cố định" },
+      { "name": "dateField", "type": "Date (dd/MM/yyyy)", "required": true, "description": "Field dạng ngày tháng" },
+      { "name": "datetimeField", "type": "DateTime (dd/MM/yyyy HH:mm:ss)", "required": false, "description": "Field dạng ngày giờ" },
+      { "name": "objectField.subString", "type": "String", "required": true, "description": "Field con dạng chuỗi trong object (dùng dấu chấm)" },
+      { "name": "objectField.subNumber", "type": "Number", "required": true, "description": "Field con dạng số trong object" },
+      { "name": "objectField.subBoolean", "type": "Boolean", "required": false, "description": "Field con dạng boolean trong object" },
+      { "name": "arrayField[].itemCode", "type": "String", "required": true, "description": "Field trong mảng object (dùng [])" },
+      { "name": "arrayField[].itemName", "type": "String", "required": true, "description": "Tên item trong mảng" },
+      { "name": "arrayField[].itemQuantity", "type": "Number", "required": true, "description": "Số lượng trong mảng" },
+      { "name": "arrayField[].itemPrice", "type": "Number", "required": true, "description": "Đơn giá trong mảng" },
+      { "name": "nestedArrayField[].device.type", "type": "String", "required": true, "description": "Field lồng nhiều cấp: array → object → field" },
+      { "name": "nestedArrayField[].device.brand", "type": "String", "required": true, "description": "Thương hiệu thiết bị" },
+      { "name": "nestedArrayField[].device.imei", "type": "String", "required": false, "description": "IMEI hoặc định danh thiết bị" },
+      { "name": "data.id", "type": "String (UUID)", "required": true, "description": "UUID định danh giao dịch trong response" },
+      { "name": "data.totalAmount", "type": "Number", "required": true, "description": "Tổng số tiền (VND)" },
+      { "name": "data.paymentStatus", "type": "Boolean", "required": true, "description": "Trạng thái thanh toán: true/false" },
+      { "name": "data.contractStatus", "type": "Enum (PENDING/PAID/FAILED/EXPIRED)", "required": true, "description": "Trạng thái vòng đời hợp đồng" },
+      { "name": "data.paidAt", "type": "DateTime (ISO 8601)", "required": false, "description": "Thời điểm thanh toán (ISO-8601)" },
+      { "name": "data.items[].code", "type": "String", "required": true, "description": "Mã item trong mảng response" },
+      { "name": "data.items[].name", "type": "String", "required": true, "description": "Tên item trong response" },
+      { "name": "data.items[].quantity", "type": "Number", "required": true, "description": "Số lượng item" },
+      { "name": "data.items[].price", "type": "Number", "required": true, "description": "Đơn giá item" },
+      { "name": "data.certificateUrl", "type": "String (URL)", "required": true, "description": "Đường dẫn file PDF chứng nhận" }
+    ]
+  }
+]

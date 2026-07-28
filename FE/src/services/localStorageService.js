@@ -17,13 +17,20 @@ const tryAPI = async (apiFn, fallbackFn) => {
   }
 };
 
-// Dữ liệu mặc định
+const hashPassword = async (password) => {
+  const msgBuffer = new TextEncoder().encode(password);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+};
+
+// Dữ liệu mặc định — không chứa password plaintext
 export const FALLBACK_ACCOUNTS = [
-  { id: 1, email: "admin@pvi.com", role: "ADMIN", status: "Active", description: "Quản trị viên", password: "123" },
-  { id: 2, email: "momo@pvi.com", role: "ĐỐI TÁC", status: "Active", description: "Tài khoản Ví MoMo", password: "123" },
-  { id: 3, email: "vifo@pvi.com", role: "ĐỐI TÁC", status: "Active", description: "Tài khoản VIFO", password: "123" },
-  { id: 4, email: "zalopay@pvi.com", role: "ĐỐI TÁC", status: "Inactive", description: "Tài khoản ZaloPay", password: "123" },
-  { id: 5, email: "vnpay@pvi.com", role: "ĐỐI TÁC", status: "Active", description: "Tài khoản VNPay", password: "123" }
+  { id: 1, email: "admin@pvi.com", role: "ADMIN", status: "Active", description: "Quản trị viên" },
+  { id: 2, email: "momo@pvi.com", role: "ĐỐI TÁC", status: "Active", description: "Tài khoản Ví MoMo" },
+  { id: 3, email: "vifo@pvi.com", role: "ĐỐI TÁC", status: "Active", description: "Tài khoản VIFO" },
+  { id: 4, email: "zalopay@pvi.com", role: "ĐỐI TÁC", status: "Inactive", description: "Tài khoản ZaloPay" },
+  { id: 5, email: "vnpay@pvi.com", role: "ĐỐI TÁC", status: "Active", description: "Tài khoản VNPay" }
 ];
 
 export const FALLBACK_PROFILES = [
@@ -57,7 +64,9 @@ export const FALLBACK_PROFILES = [
       'api-submit-claim', 'api-einvoice-issue', 'api-recon-daily',
       'api-agent-commission', 'api-endorse-cancel', 'api-crm-renewal-check',
       'api-uw-risk-assess', 'api-reinsurance-share', 'ref-dictionary',
-      'ref-status-codes', 'changelog-versions'
+      'ref-status-codes', 'changelog-versions',
+      'api-aqua-fee-quote', 'api-aqua-create-policy', 'api-aqua-query-policy',
+      'api-aqua-cancel-policy', 'api-vatcb-create', 'api-vatcb-query'
     ]
   }
 ];
@@ -71,13 +80,23 @@ export const FALLBACK_PARTNERS = [
 ];
 
 // --- Accounts ---
+const HASH_123 = 'a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3';
+
+const seedAccounts = () => {
+  const seeded = FALLBACK_ACCOUNTS.map(acc => ({ ...acc, passwordHash: HASH_123 }));
+  localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(seeded));
+  return seeded;
+};
+
 export const getAccounts = () => {
   const stored = localStorage.getItem(ACCOUNTS_KEY);
   if (stored) {
-    try { return JSON.parse(stored); } catch(e) {}
+    try {
+      const parsed = JSON.parse(stored);
+      if (parsed.length > 0 && parsed[0].passwordHash) return parsed;
+    } catch(e) {}
   }
-  localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(FALLBACK_ACCOUNTS));
-  return FALLBACK_ACCOUNTS;
+  return seedAccounts();
 };
 
 export const saveAccounts = (accounts) => {
@@ -88,13 +107,18 @@ export const addAccount = async (account) => {
   try {
     const result = await accountsApi.create(account);
     const accounts = getAccounts();
-    const updated = [...accounts, result];
+    const updated = [...accounts, { ...result, passwordHash: result.passwordHash }];
     saveAccounts(updated);
     return result;
   } catch {
     const accounts = getAccounts();
     const newId = accounts.length ? Math.max(...accounts.map(a => a.id)) + 1 : 1;
-    const newAccount = { ...account, id: newId };
+    const { password, ...rest } = account;
+    const newAccount = {
+      ...rest,
+      id: newId,
+      passwordHash: password ? await hashPassword(password) : undefined
+    };
     const updated = [...accounts, newAccount];
     saveAccounts(updated);
     return newAccount;
@@ -115,7 +139,13 @@ export const updateAccount = async (id, data) => {
     const accounts = getAccounts();
     const index = accounts.findIndex(a => a.id === id);
     if (index === -1) throw new Error('Account not found');
-    const updated = { ...accounts[index], ...data };
+    const existing = accounts[index];
+    const { password, ...rest } = data;
+    const updated = {
+      ...existing,
+      ...rest,
+      passwordHash: password ? await hashPassword(password) : existing.passwordHash
+    };
     accounts[index] = updated;
     saveAccounts(accounts);
     return updated;
@@ -130,6 +160,16 @@ export const deleteAccount = async (id) => {
   const filtered = accounts.filter(a => a.id !== id);
   saveAccounts(filtered);
 };
+
+export const verifyAccountPassword = async (email, password) => {
+  const accounts = getAccounts();
+  const account = accounts.find(a => a.email.trim().toLowerCase() === email.trim().toLowerCase());
+  if (!account) return null;
+  const inputHash = await hashPassword(password.trim());
+  return inputHash === account.passwordHash ? account : null;
+};
+
+export const hashPasswordForStorage = hashPassword;
 
 // --- Partners ---
 export const getPartners = async () => {
@@ -258,6 +298,11 @@ export const deletePartner = async (id) => {
   const partners = getPartnersLocal();
   const filtered = partners.filter(p => p.id !== id);
   savePartners(filtered);
+};
+
+export const getPartnerDefaultKey = (clientId) => {
+  if (!clientId) return null;
+  return `pvi_${clientId.toLowerCase()}_2026`;
 };
 
 // --- Permission Profiles ---

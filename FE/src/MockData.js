@@ -2,6 +2,11 @@
 
 export const VALIDATION_LIMITS = {
   so_cho: { min: 1, max: 50, label: "1 đến 50 chỗ" },
+  insuredAmount: { min: 1000000, max: 100000000, label: "1M đến 100M VNĐ" },
+  deviceValue: { min: 1000000, max: 500000000, label: "1M đến 500M VNĐ" },
+  insurancePremium: { min: 10000, max: 10000000, label: "10K đến 10M VNĐ" },
+  totalFee: { min: 10000, max: 10000000, label: "10K đến 10M VNĐ" },
+  amount: { min: 1000, max: 1000000000, label: "1K đến 1B VNĐ" },
   ChoNgoi: { min: 1, max: 50, label: "1 đến 50 chỗ" },
   SoNguoiToiDa: { min: 1, max: 50, label: "1 đến 50 người" },
   so_nguoi: { min: 1, max: 50, label: "1 đến 50 người" },
@@ -209,6 +214,150 @@ export const DEFAULT_ENDPOINTS = [
     isCustomPage: true,
     pageType: "changelog"
   }
+,
+
+  // ===== PVI & AQUA - Bảo hiểm Thiết bị điện tử =====
+  {
+    id: "api-aqua-fee-quote",
+    category: "portal.categories.aqua",
+    method: "POST",
+    path: "/api/v1/pvi/fee-quotes/bao-hiem-thiet-bi-dien-tu",
+    description: "portal.endpoints.aqua_fee_quote",
+    requestSample: {
+      deviceTypeCode: "Refrigerator",
+      programCode: "1102",
+      insuredAmount: 8000000,
+      model: "AQR-D60FA(BS)"
+    },
+    responseFormat: {
+      totalFee: 400000,
+      status: "200"
+    }
+  },
+  {
+    id: "api-aqua-create-policy",
+    category: "portal.categories.aqua",
+    method: "POST",
+    path: "/api/v1/pvi/policies/bao-hiem-thiet-bi-dien-tu",
+    description: "portal.endpoints.aqua_create_policy",
+    requestSample: {
+      partnerTransactionId: "Test07",
+      programCode: "1102",
+      customerName: "Nguyen Van A",
+      customerPhone: "0901234567",
+      customerAddress: "123 Nguyen Hue, Q1, TP.HCM",
+      customerEmail: "customer@example.com",
+      startDate: "01/07/2026",
+      endDate: "30/07/2026",
+      startTime: "00:00",
+      endTime: "23:59",
+      isRenewal: false,
+      source: "APP",
+      saleChannel: "ONLINE",
+      paymentTransactionId: "PAY-20260701-001",
+      device: {
+        deviceTypeCode: "Refrigerator",
+        brand: "AQUA",
+        model: "AQR-D60FA(BS)",
+        imei: "123456789012345",
+        deviceValue: 15000000,
+        insurancePremium: 400000,
+        insuredAmount: 15000000
+      }
+    },
+    responseFormat: {
+      partnerTransactionId: "Test07",
+      status: "OFFICIAL",
+      policyNumber: "ABC/12345",
+      serialNumber: "123456789",
+      certificateUrl: "https://certificate.pvi.com.vn/ABC/12345",
+      message: "Thanh cong"
+    }
+  },
+  {
+    id: "api-aqua-query-policy",
+    category: "portal.categories.aqua",
+    method: "GET",
+    path: "/api/v1/pvi/policies/{partnerTransactionId}",
+    description: "portal.endpoints.aqua_query_policy",
+    responseFormat: {
+      partnerTransactionId: "Test07",
+      status: "OFFICIAL",
+      policyNumber: "ABC/12345",
+      serialNumber: "123456789",
+      certificateUrl: "https://certificate.pvi.com.vn/ABC/12345",
+      message: "Thanh cong"
+    }
+  },
+  {
+    id: "api-aqua-cancel-policy",
+    category: "portal.categories.aqua",
+    method: "POST",
+    path: "/api/v1/pvi/policies/{partnerTransactionId}/cancel-requests",
+    description: "portal.endpoints.aqua_cancel_policy",
+    requestSample: {
+      reason: "Customer changed mind",
+      requestedBy: "staff_aqua@example.com",
+      cancelDate: "01/07/2026"
+    },
+    responseFormat: {
+      message: "Yêu cầu huỷ đơn thành công"
+    }
+  },
+  {
+    id: "api-vatcb-create",
+    category: "portal.categories.vatcb",
+    method: "POST",
+    path: "/api/v1/vatcb/create",
+    description: "portal.endpoints.vatcb_create",
+    requestSample: {
+      amount: 30000,
+      customerName: "Nguyen Van A",
+      requestId: "REQ-003",
+      orderInfo: "Thanh toan don BHTX 003",
+      callbackUrl: "https://partner.example.com/hooks/pvi"
+    },
+    responseFormat: {
+      status: true,
+      code: "000",
+      message: "Success",
+      data: {
+        id: "f61ccf05-e9bd-4f7b-91b0-85b90dc6bc8d",
+        requestId: "REQ-003",
+        virtualAccountNumber: "M37926000000121",
+        qrCode: "00020101021238590010A00000072701...",
+        qrBase64: "data:image/png;base64,iVBORw0KGgo...",
+        bankName: "Ngân hàng TMCP Kỹ Thuơng Việt Nam (Techcombank)",
+        customerName: "Nguyen Van A",
+        amount: 30000,
+        expiryDate: "05/07/2026",
+        callbackUrl: "https://partner.example.com/hooks/pvi",
+        message: "Success"
+      }
+    }
+  },
+  {
+    id: "api-vatcb-query",
+    category: "portal.categories.vatcb",
+    method: "GET",
+    path: "/api/v1/vatcb/{id}",
+    description: "portal.endpoints.vatcb_query",
+    responseFormat: {
+      status: true,
+      code: "000",
+      message: "Thành công",
+      data: {
+        id: "f61ccf05-e9bd-4f7b-91b0-85b90dc6bc8d",
+        requestId: "REQ-003",
+        amount: 30000,
+        virtualAccountNumber: "M37926000000121",
+        paymentStatus: true,
+        contractStatus: "PAID",
+        paidAt: "2026-06-28T09:38:29+07:00",
+        callbackUrl: "https://partner.example.com/hooks/pvi"
+      }
+    }
+  }
 ];
 
 // Các phần còn lại giữ nguyên từ file cũ:
@@ -245,7 +394,48 @@ export const FIELD_DICTIONARY = {
   TongSoDon: "Tổng số lượng đơn hàng bảo hiểm phát sinh trong kỳ đối soát",
   TongDoanhThu: "Tổng số tiền doanh thu phí bảo hiểm tích lũy thu được",
   AgentCode: "Mã quản lý duy nhất của Đại lý hoặc CTV cấp dưới",
-  TyleChietKhau: "Tỷ lệ hoa hồng chiết khấu được hưởng thương mại (Ví dụ: 0.15 = 15%)"
+  TyleChietKhau: "Tỷ lệ hoa hồng chiết khấu được hưởng thương mại (Ví dụ: 0.15 = 15%)",
+
+  // AQUA fields
+  deviceTypeCode: "Loại thiết bị điện tử (Refrigerator, AC, Washing Machine...)",
+  programCode: "Mã chương trình bảo hiểm (1102: 12 tháng, 1103: 24 tháng)",
+  insuredAmount: "Số tiền bảo hiểm",
+  model: "Model thiết bị",
+  partnerTransactionId: "Mã giao dịch đối tác tự sinh để đối soát",
+  customerName: "Tên khách hàng",
+  customerPhone: "Số điện thoại khách hàng",
+  customerAddress: "Địa chỉ khách hàng",
+  customerEmail: "Email khách hàng",
+  startDate: "Ngày bắt đầu hiệu lực (dd/MM/yyyy)",
+  endDate: "Ngày kết thúc hiệu lực (dd/MM/yyyy)",
+  startTime: "Giờ bắt đầu hiệu lực (HH:mm)",
+  endTime: "Giờ kết thúc hiệu lực (HH:mm)",
+  isRenewal: "Đánh dấu đơn tái tục (true/false)",
+  source: "Nguồn gọi API (APP/WEB)",
+  saleChannel: "Kênh bán (ONLINE/OFFLINE)",
+  paymentTransactionId: "Mã giao dịch thanh toán",
+  brand: "Hãng thiết bị",
+  imei: "IMEI hoặc định danh thiết bị",
+  deviceValue: "Giá trị thiết bị",
+  insurancePremium: "Phí bảo hiểm",
+  totalFee: "Tổng phí bảo hiểm",
+  policyNumber: "Số hợp đồng do PVI cấp",
+  serialNumber: "Số seri giấy chứng nhận",
+  certificateUrl: "Đường dẫn tới giấy chứng nhận (PDF)",
+  virtualAccountNumber: "Số tài khoản ảo để khách chuyển khoản",
+  qrCode: "Chuỗi nội dung QR (EMVCo)",
+  qrBase64: "Ảnh QR dạng data URI base64",
+  bankName: "Tên ngân hàng phát hành VA",
+  expiryDate: "Hạn thanh toán của VA (dd/MM/yyyy)",
+  paymentStatus: "Trạng thái thanh toán (true/false)",
+  contractStatus: "Trạng thái vòng đời (PENDING/PAID/FAILED/EXPIRED)",
+  paidAt: "Thời điểm thanh toán",
+  reason: "Lý do huỷ đơn",
+  requestedBy: "Email người yêu cầu huỷ đơn",
+  cancelDate: "Ngày yêu cầu huỷ (dd/MM/yyyy)",
+  requestId: "Mã tham chiếu của đối tác",
+  orderInfo: "Nội dung thanh toán",
+  callbackUrl: "URL đối tác nhận kết quả callback"
 };
 
 export const SUPPORTED_LANGUAGES = [
