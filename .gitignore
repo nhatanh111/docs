@@ -1,8 +1,10 @@
 node_modules
 dist
 .env
+*.env.production
 *.local
 AGENTS.md
 .opencode/
+BE/test/
 TEST_PLAN*.md
 sample-api-upload.*
