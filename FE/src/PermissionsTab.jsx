@@ -793,7 +793,7 @@ export default function PermissionsTab({ partners, setPartners, accounts, initia
     const result = addUploadedEndpoints(previewEndpoints);
     const newProfile = addPermissionProfile({
       name: previewFileName,
-      description: `Được tạo từ file upload — ${previewEndpoints.length} API`,
+      description: t('permissions.created_from_upload', { count: previewEndpoints.length }),
       allowedApis: previewEndpoints.map(ep => ep.id)
     });
     setProfiles([...profiles, newProfile]);
@@ -1089,7 +1089,7 @@ export default function PermissionsTab({ partners, setPartners, accounts, initia
                       onClick={() => setApiSearchQuery('')}
                       className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs font-bold border-0 bg-transparent cursor-pointer"
                     >
-                      ✕ {t('permissions.clear_filter', 'clear filter')}
+                      ✕ {t('permissions.clear_filter', 'Bỏ lọc')}
                     </button>
                   )}
 

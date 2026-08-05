@@ -117,7 +117,7 @@ export default function SandboxPanel({
             type="text"
             value={authToken.length > 30 ? `${authToken.slice(0, 10)}…${authToken.slice(-6)}` : authToken}
             readOnly
-            placeholder="Nhập mã bí mật pvi_secret..."
+            placeholder={t('portal.labels.secret_placeholder')}
             className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-slate-800 font-mono text-[11px] focus:outline-none focus:border-blue-500 shadow-sm select-text"
           />
         </div>
@@ -135,7 +135,7 @@ export default function SandboxPanel({
           ) : isFormMode ? (
             <div className="space-y-3 max-h-52 overflow-y-auto pr-1 custom-scrollbar">
               {formFields.length === 0 ? (
-                <p className="text-slate-400 italic text-[11px] text-center pt-4">Không tìm thấy tham số khả dụng hoặc JSON bị lỗi.</p>
+                <p className="text-slate-400 italic text-[11px] text-center pt-4">{t('portal.labels.no_form_params')}</p>
               ) : (
                 formFields.map(([key, val]) => (
                   <div key={key} className="space-y-1 text-left">
@@ -144,7 +144,7 @@ export default function SandboxPanel({
                       type="text"
                       value={String(val)}
                       onChange={(e) => handleFormFieldChange(currentActiveEp?.id, key, e.target.value)}
-                      placeholder={`Nhập thông tin cho ${key}...`}
+                      placeholder={t('portal.labels.enter_value_for', { key })}
                       className="w-full bg-slate-50/50 border border-slate-200 rounded-xl px-3 py-1.5 text-slate-800 font-mono text-[11px] focus:outline-none focus:border-blue-500 transition-all shadow-inner"
                     />
                   </div>

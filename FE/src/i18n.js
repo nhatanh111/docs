@@ -162,10 +162,12 @@ const resources = {
       'permissions.cannot_delete_default': '❌ Cannot delete default system profile!',
       'permissions.delete_profile_confirm': 'Delete this profile? Partners using it will lose their permission configuration.',
       'permissions.upload_success_detail': '✅ Extracted {{count}} APIs from file "{{name}}"',
+      'permissions.created_from_upload': 'Created from file upload — {{count}} APIs',
       'permissions.created_profile_notification': '✅ Created profile "{{name}}" with {{count}} APIs',
 'permissions.skipped_apis': ' (skipped {{count}} duplicate IDs)',
       'permissions.not_linked': 'Not linked',
       'permissions.search_partner_api': '🔍 Search API...',
+      'permissions.clear_filter': 'Clear filter',
       'permissions.no_apis_available': 'No APIs available',
       'permissions.select_all': 'Select All',
       'permissions.deselect_all': 'Deselect All',
@@ -235,7 +237,10 @@ const resources = {
           copy_code: "📋 Copy Code",
           copied: "✓ Copied!",
           no_params: "This reference page does not contain request parameters.",
-          no_response: "Click the \"Send API Request\" button above and see the response here!"
+          no_response: "Click the \"Send API Request\" button above and see the response here!",
+          secret_placeholder: "Enter pvi_secret...",
+          no_form_params: "No available parameters found or JSON is invalid.",
+          enter_value_for: "Enter value for {{key}}..."
         },
         custom: {
           overview: "Welcome to the <strong>A Hub</strong> integration docs — automated premium calculation and certificate issuance connected to PVI Core Insurance.",
@@ -259,6 +264,7 @@ const resources = {
       // ===== FIELD DICTIONARY =====
       fields: {
         default: "Integration data field belonging to PVI Core Insurance business logic.",
+        array_child: "Child object structure:",
         deviceTypeCode: "Device type code (Refrigerator, AC, Washing Machine...)",
         programCode: "Insurance program code (1102: 12 months, 1103: 24 months)",
         insuredAmount: "Insured amount",
@@ -483,10 +489,12 @@ const resources = {
       'permissions.cannot_delete_default': '❌ Không thể xóa nhóm quyền hệ thống mặc định!',
       'permissions.delete_profile_confirm': 'Xóa nhóm quyền này? Các đối tác thuộc nhóm này sẽ mất cấu hình quyền.',
       'permissions.upload_success_detail': '✅ Đã giải nén {{count}} API từ file "{{name}}"',
+      'permissions.created_from_upload': 'Được tạo từ file upload — {{count}} API',
       'permissions.created_profile_notification': '✅ Đã tạo nhóm quyền "{{name}}" với {{count}} API',
 'permissions.skipped_apis': ' (bỏ qua {{count}} API trùng ID)',
       'permissions.not_linked': 'Chưa liên kết',
       'permissions.search_partner_api': '🔍 Tìm API...',
+      'permissions.clear_filter': 'Bỏ lọc',
       'permissions.no_apis_available': 'Chưa có API nào',
       'permissions.select_all': 'Chọn hết',
       'permissions.deselect_all': 'Bỏ hết',
@@ -556,7 +564,10 @@ const resources = {
           copy_code: "📋 Sao chép mã",
           copied: "✓ Đã sao chép!",
           no_params: "Trang tham chiếu này không chứa tham số yêu cầu.",
-          no_response: "Nhấn nút \"Gửi yêu cầu API\" ở trên để xem phản hồi tại đây!"
+          no_response: "Nhấn nút \"Gửi yêu cầu API\" ở trên để xem phản hồi tại đây!",
+          secret_placeholder: "Nhập mã bí mật pvi_secret...",
+          no_form_params: "Không tìm thấy tham số khả dụng hoặc JSON bị lỗi.",
+          enter_value_for: "Nhập thông tin cho {{key}}..."
         },
         custom: {
           overview: "Chào mừng đến với tài liệu tích hợp cổng thông tin bảo hiểm <strong>A Hub</strong> — tính phí và phát hành ấn chỉ tự động, kết nối Core Insurance PVI.",
@@ -580,6 +591,7 @@ const resources = {
       // ===== FIELD DICTIONARY =====
       fields: {
         default: "Trường dữ liệu tích hợp Core Insurance PVI.",
+        array_child: "Cấu trúc đối tượng con:",
         client_id: "ID ứng dụng lấy Access Token OAuth2",
         client_secret: "Mật khẩu do PVI cấp",
         grant_type: "Phương thức cấp quyền (Mặc định: client_credentials)",
