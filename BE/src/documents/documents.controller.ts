@@ -19,7 +19,8 @@ export class DocumentsController {
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Lấy danh sách API documents' })
   getDocuments(@Req() req: Request): any {
-    return this.documentsService.getDocuments((req as any).user);
+    const user = (req as Request & { user?: Record<string, unknown> }).user;
+    return this.documentsService.getDocuments(user);
   }
 
   @Post('admin/project-permission')
@@ -27,7 +28,11 @@ export class DocumentsController {
   @Roles('ADMIN')
   @ApiOperation({ summary: 'Gỡ/gán quyền project cho đối tác' })
   setProjectPermission(@Body() body: ProjectPermissionDto): any {
-    return this.documentsService.setProjectPermission(body.partnerId, body.projectId, body.hasPermission);
+    return this.documentsService.setProjectPermission(
+      body.partnerId,
+      body.projectId,
+      body.hasPermission,
+    );
   }
 
   @Post('admin/endpoint-permission')
@@ -35,7 +40,11 @@ export class DocumentsController {
   @Roles('ADMIN')
   @ApiOperation({ summary: 'Gỡ/gán quyền endpoint cho đối tác' })
   setEndpointPermission(@Body() body: EndpointPermissionDto): any {
-    return this.documentsService.setEndpointPermission(body.partnerId, body.endpointId, body.hasPermission);
+    return this.documentsService.setEndpointPermission(
+      body.partnerId,
+      body.endpointId,
+      body.hasPermission,
+    );
   }
 
   @Post('documents/upload')

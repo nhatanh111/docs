@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<endpoints>
+  <endpoint>
+    <id>api-aqua-fee-quote</id>
+    <category>Bảo hiểm Thiết bị điện tử</category>
+    <method>POST</method>
+    <path>/api/v1/pvi/fee-quotes/bao-hiem-thiet-bi-dien-tu</path>
+    <description>Tính phí bảo hiểm thiết bị điện tử</description>
+  </endpoint>
+  <endpoint>
+    <id>api-aqua-create-policy</id>
+    <category>Bảo hiểm Thiết bị điện tử</category>
+    <method>POST</method>
+    <path>/api/v1/pvi/policies/bao-hiem-thiet-bi-dien-tu</path>
+    <description>Tạo đơn bảo hiểm thiết bị điện tử</description>
+  </endpoint>
+  <endpoint>
+    <id>api-aqua-query-policy</id>
+    <category>Bảo hiểm Thiết bị điện tử</category>
+    <method>GET</method>
+    <path>/api/v1/pvi/policies/{partnerTransactionId}</path>
+    <description>Tra cứu thông tin đơn bảo hiểm</description>
+  </endpoint>
+  <endpoint>
+    <id>api-aqua-cancel-policy</id>
+    <category>Bảo hiểm Thiết bị điện tử</category>
+    <method>POST</method>
+    <path>/api/v1/pvi/policies/{partnerTransactionId}/cancel-requests</path>
+    <description>Yêu cầu huỷ đơn bảo hiểm</description>
+  </endpoint>
+  <endpoint>
+    <id>api-vatcb-create</id>
+    <category>Cổng thanh toán VA TCB</category>
+    <method>POST</method>
+    <path>/api/v1/vatcb/create</path>
+    <description>Tạo tài khoản ảo VA + QR thanh toán</description>
+  </endpoint>
+  <endpoint>
+    <id>api-vatcb-query</id>
+    <category>Cổng thanh toán VA TCB</category>
+    <method>GET</method>
+    <path>/api/v1/vatcb/{id}</path>
+    <description>Tra cứu trạng thái giao dịch VA TCB</description>
+  </endpoint>
+  <endpoint>
+    <id>api-vatcb-cancel</id>
+    <category>Cổng thanh toán VA TCB</category>
+    <method>POST</method>
+    <path>/api/v1/vatcb/{id}/cancel</path>
+    <description>Huỷ giao dịch VA TCB</description>
+  </endpoint>
+  <endpoint>
+    <id>api-motor-quote</id>
+    <category>Bảo hiểm Xe cơ giới</category>
+    <method>POST</method>
+    <path>/api/v1/pvi/motor/quote</path>
+    <description>Tính phí bảo hiểm xe cơ giới</description>
+  </endpoint>
+  <endpoint>
+    <id>api-motor-create-policy</id>
+    <category>Bảo hiểm Xe cơ giới</category>
+    <method>POST</method>
+    <path>/api/v1/pvi/motor/policies</path>
+    <description>Tạo đơn bảo hiểm xe cơ giới</description>
+  </endpoint>
+  <endpoint>
+    <id>api-motor-query-policy</id>
+    <category>Bảo hiểm Xe cơ giới</category>
+    <method>GET</method>
+    <path>/api/v1/pvi/motor/policies/{partnerTransactionId}</path>
+    <description>Tra cứu đơn bảo hiểm xe cơ giới</description>
+  </endpoint>
+  <endpoint>
+    <id>api-motor-claim</id>
+    <category>Bảo hiểm Xe cơ giới</category>
+    <method>POST</method>
+    <path>/api/v1/pvi/motor/claims</path>
+    <description>Khai báo bồi thường bảo hiểm xe</description>
+  </endpoint>
+  <endpoint>
+    <id>api-travel-quote</id>
+    <category>Bảo hiểm Du lịch</category>
+    <method>POST</method>
+    <path>/api/v1/pvi/travel/quote</path>
+    <description>Tính phí bảo hiểm du lịch</description>
+  </endpoint>
+  <endpoint>
+    <id>api-travel-create-policy</id>
+    <category>Bảo hiểm Du lịch</category>
+    <method>POST</method>
+    <path>/api/v1/pvi/travel/policies</path>
+    <description>Tạo đơn bảo hiểm du lịch</description>
+  </endpoint>
+  <endpoint>
+    <id>api-life-register</id>
+    <category>Bảo hiểm Nhân thọ</category>
+    <method>POST</method>
+    <path>/api/v1/pvi/life/register</path>
+    <description>Đăng ký bảo hiểm nhân thọ</description>
+  </endpoint>
+  <endpoint>
+    <id>api-life-query</id>
+    <category>Bảo hiểm Nhân thọ</category>
+    <method>GET</method>
+    <path>/api/v1/pvi/life/policies/{partnerTransactionId}</path>
+    <description>Tra cứu bảo hiểm nhân thọ</description>
+  </endpoint>
+  <endpoint>
+    <id>api-vnpay-create</id>
+    <category>Cổng thanh toán VNPAY</category>
+    <method>POST</method>
+    <path>/api/v1/vnpay/create</path>
+    <description>Tạo yêu cầu thanh toán VNPAY</description>
+  </endpoint>
+  <endpoint>
+    <id>api-vnpay-query</id>
+    <category>Cổng thanh toán VNPAY</category>
+    <method>GET</method>
+    <path>/api/v1/vnpay/transactions/{transactionId}</path>
+    <description>Tra cứu giao dịch VNPAY</description>
+  </endpoint>
+</endpoints>

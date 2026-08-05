@@ -31,7 +31,7 @@ export default function CustomPageContent({ type }) {
     return (
       <div className="space-y-4 text-left">
         <p className="text-xs text-slate-600">{t('portal.custom.headers_desc')}</p>
-        <pre className="bg-slate-50 border p-4 rounded-xl font-mono text-xs text-slate-700 leading-relaxed">{`{\n  "Content-Type": "application/json",\n  "Authorization": "Bearer eyJhbGciOiJIUzI1Ni...",\n  "CpId": "PARTNER_ID_AN_BIEN",\n  "Sign": "8cc21a24890c2918bb1237a892b11a12"\n}`}</pre>
+        <pre className="bg-slate-50 border p-4 rounded-xl font-mono text-xs text-slate-700 leading-relaxed">{`{\n  "Content-Type": "application/json",\n  "Authorization": "Bearer eyJhbGciOiJIUzI1Ni...",\n  "CpId": "partner",\n  "Sign": "8cc21a24890c2918bb1237a892b11a12"\n}`}</pre>
       </div>
     );
   }
@@ -87,8 +87,8 @@ export default function CustomPageContent({ type }) {
       <div className="space-y-4 text-left font-sans">
         <div className="border rounded-xl p-4 bg-slate-50/50">
           <div className="flex items-center space-x-2 mb-2">
-            <span className="font-bold text-slate-900 text-sm">v1.3.0 Stable Release</span>
-            <span className="bg-emerald-50 text-emerald-600 text-[9px] px-1.5 py-0.5 rounded font-black border border-emerald-100">LATEST</span>
+            <span className="font-bold text-slate-900 text-sm">{t('portal.custom.changelog_version', 'v1.3.0 Stable Release')}</span>
+            <span className="bg-emerald-50 text-emerald-600 text-[9px] px-1.5 py-0.5 rounded font-black border border-emerald-100">{t('portal.custom.changelog_latest')}</span>
           </div>
           <ul className="list-disc ml-5 text-xs text-slate-600 space-y-1">
             <li>{t('portal.custom.changelog_detail')}</li>
@@ -96,8 +96,8 @@ export default function CustomPageContent({ type }) {
           </ul>
         </div>
         <div className="border rounded-xl p-4 bg-slate-50/20">
-          <span className="font-bold text-slate-800 text-xs block mb-1">v1.2.0 Release</span>
-          <p className="text-xs text-slate-500">Mã hóa nâng cao tốc độ tải file PDF chứng nhận điện tử Core Insurance.</p>
+          <span className="font-bold text-slate-800 text-xs block mb-1">{t('portal.custom.changelog_old_version', 'v1.2.0 Release')}</span>
+          <p className="text-xs text-slate-500">{t('portal.custom.changelog_old_detail', 'Enhanced encryption for Core Insurance e-certificate PDF download speed.')}</p>
         </div>
       </div>
     );

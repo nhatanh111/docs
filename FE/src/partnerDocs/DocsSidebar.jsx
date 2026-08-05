@@ -12,7 +12,7 @@ export default function DocsSidebar({ sidebarScrollRef, categories, activeEndpoi
           if (epsInCat.length === 0) return null;
           return (
             <div key={cIdx} className="space-y-1">
-              <div className="text-slate-400 uppercase font-extrabold tracking-wider text-[9px] pt- px-1 text-left">
+              <div className="text-slate-400 uppercase font-extrabold tracking-wider text-[9px] pt-1 px-1 text-left">
                 {t(cat)}
               </div>
               <div className="space-y-0.5">
@@ -26,7 +26,7 @@ export default function DocsSidebar({ sidebarScrollRef, categories, activeEndpoi
                     }`}
                   >
                     <span className={`text-[8px] px-1.5 py-0.5 rounded font-black text-white shrink-0 ${
-                      ep.method === 'POST' ? 'bg-emerald-600' : ep.method === 'INFO' || ep.method === 'DATA' ? 'bg-blue-500' : 'bg-slate-500'
+                      {POST: 'bg-emerald-600', PUT: 'bg-amber-600', PATCH: 'bg-orange-500', GET: 'bg-blue-500', DELETE: 'bg-red-500', INFO: 'bg-blue-500', DATA: 'bg-blue-500', CODE: 'bg-purple-500', HASH: 'bg-purple-500', VER: 'bg-slate-500'}[ep.method] || 'bg-slate-500'
                     }`}>
                       {ep.method}
                     </span>

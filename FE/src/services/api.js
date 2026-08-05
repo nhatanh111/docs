@@ -41,6 +41,7 @@ export const accountsApi = {
 
 export const partnersApi = {
   list: () => request('/api/admin/partners'),
+  getMe: () => request('/api/partners/me'),
   create: (data) =>
     request('/api/admin/partners', {
       method: 'POST',

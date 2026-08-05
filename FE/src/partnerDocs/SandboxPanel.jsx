@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SUPPORTED_LANGUAGES, generateLanguageSnippet } from '../MockData';
 import CodeHighlighter from './CodeHighlighter';
@@ -10,7 +10,6 @@ export default function SandboxPanel({
   setSelectedLang,
   requestBodies,
   authToken,
-  setAuthToken,
   isFormMode,
   setIsFormMode,
   handleFormFieldChange,
@@ -21,12 +20,14 @@ export default function SandboxPanel({
   setApiResponses,
 }) {
   const { t } = useTranslation();
+  const [copied, setCopied] = useState(false);
 
   const handleCopyCode = async () => {
     const currentSnippetText = generateLanguageSnippet(selectedLang, currentActiveEp, requestBodies[currentActiveEp?.id]);
     if (currentSnippetText) {
       await navigator.clipboard.writeText(currentSnippetText);
-      alert(t('portal.labels.copy_code'));
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
     }
   };
 
@@ -54,14 +55,21 @@ export default function SandboxPanel({
           ))}
         </div>
 
-        <div className="bg-[#0f172a] rounded-xl border border-slate-800 shadow-xl max-w-full overflow-hidden relative group">
-          <button
-            type="button"
-            onClick={handleCopyCode}
-            className="absolute right-2 top-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold bg-white/10 text-white hover:bg-white/20 backdrop-blur-sm border border-white/10 cursor-pointer"
-          >
-            {t('portal.labels.copy_code')}
-          </button>
+        <div className="bg-[#0f172a] rounded-xl border border-slate-800 shadow-xl max-w-full overflow-hidden">
+          <div className="flex items-center justify-between px-3 py-1.5">
+            <span className="text-[10px] font-bold uppercase tracking-wide text-slate-400">
+              {SUPPORTED_LANGUAGES.find(l => l.id === selectedLang)?.name || selectedLang}
+            </span>
+            <button
+              type="button"
+              onClick={handleCopyCode}
+              className={`flex items-center gap-0.5 px-1 py-0 rounded-md text-[8.5px] font-semibold border cursor-pointer transition-all ${
+                copied ? 'bg-emerald-500/20 text-emerald-300 border-emerald-400/30' : 'bg-white/10 text-white hover:bg-white/20 border-white/10'
+              }`}
+            >
+              {copied ? t('portal.labels.copied') : t('portal.labels.copy_code')}
+            </button>
+          </div>
           <pre className="w-full h-28 bg-[#0f172a] text-slate-300 font-mono text-[11px] leading-relaxed p-3 border-0 overflow-y-auto select-text custom-scrollbar resize-none text-left m-0 whitespace-pre-wrap">
             <CodeHighlighter
               code={generateLanguageSnippet(selectedLang, currentActiveEp, requestBodies[currentActiveEp?.id])}
@@ -107,8 +115,8 @@ export default function SandboxPanel({
           </div>
           <input
             type="text"
-            value={authToken}
-            onChange={(e) => setAuthToken(e.target.value)}
+            value={authToken.length > 30 ? `${authToken.slice(0, 10)}…${authToken.slice(-6)}` : authToken}
+            readOnly
             placeholder="Nhập mã bí mật pvi_secret..."
             className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-slate-800 font-mono text-[11px] focus:outline-none focus:border-blue-500 shadow-sm select-text"
           />

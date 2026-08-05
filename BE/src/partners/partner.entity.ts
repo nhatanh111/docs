@@ -6,17 +6,26 @@ export class Partner extends Model {
   declare id: string;
 
   @Column({ allowNull: false })
-  name: string;
+  declare name: string;
 
   @Column({ allowNull: true })
-  email: string;
+  declare email: string;
 
   @Column({ allowNull: false })
-  clientId: string;
+  declare clientId: string;
 
   @Column({ defaultValue: 'active' })
-  status: string;
+  declare status: string;
 
   @Column({ type: DataType.INTEGER, allowNull: true })
-  accountId: number;
+  declare accountId: number;
+
+  @Column({ type: DataType.JSONB, allowNull: true })
+  declare profileIds: string[];
+
+  @Column({ type: DataType.JSONB, allowNull: true })
+  declare allowedApis: string[];
+
+  @Column({ type: DataType.JSONB, allowNull: true })
+  declare overrides: { allow: string[]; deny: string[] };
 }

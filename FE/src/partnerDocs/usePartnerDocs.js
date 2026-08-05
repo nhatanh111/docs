@@ -27,7 +27,7 @@ async function fetchUploadedEndpoints() {
 
 export default function usePartnerDocs() {
   const [activeEpId, setActiveEpId] = useState(null);
-  const [authToken, setAuthToken] = useState('pvi_secret_access_key_2026');
+  const [authToken, setAuthToken] = useState(localStorage.getItem('token') || '');
   const [requestBodies, setRequestBodies] = useState({});
   const [apiResponses, setApiResponses] = useState({});
   const [loadingStates, setLoadingStates] = useState({});
@@ -100,15 +100,18 @@ export default function usePartnerDocs() {
           return;
         }
 
-        const allowedSet = new Set();
-        profileIds.forEach(pid => {
-          const prof = profiles.find(pr => pr.id === pid);
-          if (prof && prof.allowedApis) {
-            prof.allowedApis.forEach(aid => allowedSet.add(aid));
-          }
-        });
+        const allowedSet = new Set((partner.allowedApis || []));
+        if (allowedSet.size === 0) {
+          profileIds.forEach(pid => {
+            const prof = profiles.find(pr => pr.id === pid);
+            if (prof && prof.allowedApis) {
+              prof.allowedApis.forEach(aid => allowedSet.add(aid));
+            }
+          });
+        }
         const filtered = DEFAULT_ENDPOINTS.filter(ep => allowedSet.has(ep.id));
-        setActiveEndpoints(mergeEndpoints(filtered, uploaded));
+        const filteredUploaded = uploaded.filter(ep => allowedSet.has(ep.id));
+        setActiveEndpoints(mergeEndpoints(filtered, filteredUploaded));
       } catch (e) {
         console.error("Lỗi phân quyền:", e);
         setActiveEndpoints(mergeEndpoints(DEFAULT_ENDPOINTS, uploaded));
@@ -117,12 +120,18 @@ export default function usePartnerDocs() {
   }, [mergeEndpoints]);
 
   useEffect(() => {
-    const initialBodies = {};
-    activeEndpoints.forEach(ep => {
-      const sampleText = ep.requestSample ? cleanJsonString(ep.requestSample) : '{}';
-      initialBodies[ep.id] = sampleText;
+    setRequestBodies(prev => {
+      const next = { ...prev };
+      activeEndpoints.forEach(ep => {
+        if (!(ep.id in next)) {
+          next[ep.id] = ep.requestSample ? cleanJsonString(ep.requestSample) : '{}';
+        }
+      });
+      Object.keys(next).forEach(id => {
+        if (!activeEndpoints.find(ep => ep.id === id)) delete next[id];
+      });
+      return next;
     });
-    setRequestBodies(initialBodies);
   }, [activeEndpoints]);
 
   const currentActiveEp = activeEndpoints.find(e => e.id === activeEpId) || activeEndpoints[0];
@@ -213,12 +222,12 @@ export default function usePartnerDocs() {
         requestBody = {};
       }
       const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      const token = localStorage.getItem('token');
+      const auth = authToken || localStorage.getItem('token');
       const res = await fetch(`${API_BASE}/api/sandbox/execute`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+          ...(auth ? { 'Authorization': `Bearer ${auth}` } : {}),
         },
         body: JSON.stringify({
           endpointId: id,
@@ -270,13 +279,16 @@ export default function usePartnerDocs() {
       const partner = partners.find(p => p.accountId === account.id);
       if (!partner || partner.status !== 'active') { setActiveEndpoints([]); return; }
       const profileIds = partner.profileIds || (partner.profileId ? [partner.profileId] : []);
-      const allowedSet = new Set();
-      profileIds.forEach(pid => {
-        const prof = profiles.find(pr => pr.id === pid);
-        if (prof && prof.allowedApis) prof.allowedApis.forEach(aid => allowedSet.add(aid));
-      });
+      const allowedSet = new Set((partner.allowedApis || []));
+      if (allowedSet.size === 0) {
+        profileIds.forEach(pid => {
+          const prof = profiles.find(pr => pr.id === pid);
+          if (prof && prof.allowedApis) prof.allowedApis.forEach(aid => allowedSet.add(aid));
+        });
+      }
       const filtered = DEFAULT_ENDPOINTS.filter(ep => allowedSet.has(ep.id));
-      setActiveEndpoints(mergeEndpoints(filtered, uploaded));
+      const filteredUploaded = uploaded.filter(ep => allowedSet.has(ep.id));
+      setActiveEndpoints(mergeEndpoints(filtered, filteredUploaded));
     } catch {
       setActiveEndpoints(mergeEndpoints(DEFAULT_ENDPOINTS, uploaded));
     }

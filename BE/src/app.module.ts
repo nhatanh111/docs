@@ -9,6 +9,8 @@ import { SandboxModule } from './sandbox/sandbox.module';
 import { AiExtractModule } from './ai-extract/ai-extract.module';
 import { User } from './users/user.entity';
 import { Partner } from './partners/partner.entity';
+import { ApiDocument } from './documents/document.entity';
+import { ApiEndpoint } from './documents/endpoint.entity';
 import { seedDatabase } from './database/seed';
 
 @Module({
@@ -19,9 +21,10 @@ import { seedDatabase } from './database/seed';
       useFactory: (config: ConfigService) => ({
         dialect: 'postgres',
         uri: config.get<string>('DATABASE_URL'),
-        models: [User, Partner],
+        models: [User, Partner, ApiDocument, ApiEndpoint],
         autoLoadModels: true,
         synchronize: config.get<string>('NODE_ENV') !== 'production',
+        alter: config.get<string>('NODE_ENV') !== 'production',
         logging: false,
       }),
     }),

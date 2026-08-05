@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { verifyAccountPassword } from './services/localStorageService';
 import { authApi } from './services/api';
 
 export default function Login({ onLoginSuccess }) {
+  const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -16,6 +18,9 @@ export default function Login({ onLoginSuccess }) {
 
     try {
       const data = await authApi.login(email, password);
+      if (!data || !data.token) {
+        throw new Error(t('auth.error_invalid_response'));
+      }
       const authData = {
         token: data.token,
         email,
@@ -24,9 +29,16 @@ export default function Login({ onLoginSuccess }) {
       };
       localStorage.setItem('token', authData.token);
       localStorage.setItem('user_info', JSON.stringify(authData));
+      setLoading(false);
       return onLoginSuccess(authData);
     } catch (apiErr) {
-      // Fallback: localStorage
+      const isNetworkError = apiErr instanceof TypeError;
+      if (!isNetworkError) {
+        setError(t('auth.error_invalid'));
+        setLoading(false);
+        return;
+      }
+      console.error('Login API error (network):', apiErr);
     }
 
     const matchedUser = await verifyAccountPassword(email, password);
@@ -35,7 +47,7 @@ export default function Login({ onLoginSuccess }) {
 
     if (matchedUser) {
       if (matchedUser.status === 'Inactive' || matchedUser.status === 'Đã khóa') {
-        setError('Tài khoản này hiện đang bị khóa tạm thời bởi Admin!');
+          setError(t('auth.error_inactive'));
         return;
       }
       const localAuthData = {
@@ -46,9 +58,10 @@ export default function Login({ onLoginSuccess }) {
       };
       localStorage.setItem('token', localAuthData.token);
       localStorage.setItem('user_info', JSON.stringify(localAuthData));
+      setLoading(false);
       onLoginSuccess(localAuthData);
     } else {
-      setError('Email hoặc mật khẩu không chính xác');
+      setError(t('auth.error_invalid'));
     }
   };
 
@@ -69,7 +82,7 @@ export default function Login({ onLoginSuccess }) {
             PVI API Docs
           </h2>
           <p className="text-slate-400 text-xs font-medium mt-1">
-            Đăng nhập hệ thống phân quyền
+            {t('auth.login_subtitle')}
           </p>
         </div>
         
@@ -83,7 +96,7 @@ export default function Login({ onLoginSuccess }) {
         <div className="space-y-4">
           <div>
             <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
-              Email
+              {t('auth.email_label')}
             </label>
             <div className="relative">
               <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
@@ -93,7 +106,7 @@ export default function Login({ onLoginSuccess }) {
                 type="email"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
-                placeholder="nhap@email.com"
+                placeholder={t('auth.email_placeholder')}
                 className="w-full bg-slate-50 border border-slate-200 text-slate-900 pl-10 pr-4 py-3 rounded-xl focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 focus:bg-white outline-none transition-all placeholder-slate-400 text-sm"
                 required
               />
@@ -102,7 +115,7 @@ export default function Login({ onLoginSuccess }) {
 
           <div>
             <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
-              Mật khẩu
+              {t('auth.password_label')}
             </label>
             <div className="relative">
               <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
@@ -146,14 +159,14 @@ export default function Login({ onLoginSuccess }) {
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                 </svg>
-                <span>Đang xác thực...</span>
+                <span>{t('auth.loading_text')}</span>
               </>
-            ) : 'Đăng nhập'}
+            ) : t('auth.login_button')}
           </button>
         </div>
 
         <p className="text-center text-slate-400 text-[10px] mt-8 pt-4 border-t border-slate-100">
-          &copy; 2026 Bảo hiểm PVI. All rights reserved.
+          &copy; 2026 {t('auth.copyright')}
         </p>
       </form>
     </div>

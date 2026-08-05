@@ -8,15 +8,6 @@ const API_GROUPS_KEY = 'pvi_api_groups';
 const PROFILES_KEY = 'pvi_permission_profiles';
 const UPLOADED_ENDPOINTS_KEY = 'pvi_uploaded_endpoints';
 
-const tryAPI = async (apiFn, fallbackFn) => {
-  try {
-    const result = await apiFn();
-    return result;
-  } catch {
-    return fallbackFn();
-  }
-};
-
 const hashPassword = async (password) => {
   const msgBuffer = new TextEncoder().encode(password);
   const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
@@ -29,7 +20,7 @@ export const FALLBACK_ACCOUNTS = [
   { id: 1, email: "admin@pvi.com", role: "ADMIN", status: "Active", description: "Quản trị viên" },
   { id: 2, email: "momo@pvi.com", role: "ĐỐI TÁC", status: "Active", description: "Tài khoản Ví MoMo" },
   { id: 3, email: "vifo@pvi.com", role: "ĐỐI TÁC", status: "Active", description: "Tài khoản VIFO" },
-  { id: 4, email: "zalopay@pvi.com", role: "ĐỐI TÁC", status: "Inactive", description: "Tài khoản ZaloPay" },
+  { id: 4, email: "zalopay@pvi.com", role: "ĐỐI TÁC", status: "Active", description: "Tài khoản ZaloPay" },
   { id: 5, email: "vnpay@pvi.com", role: "ĐỐI TÁC", status: "Active", description: "Tài khoản VNPay" }
 ];
 
@@ -74,7 +65,7 @@ export const FALLBACK_PROFILES = [
 export const FALLBACK_PARTNERS = [
   { id: "pt-1", name: "Ví Điện Tử MoMo", clientId: "MOMO_PVI_2026", status: "active", accountId: 2, profileIds: ['prof-4'] },
   { id: "pt-2", name: "Nền tảng VIFO", clientId: "VIFO_INSURTECH", status: "active", accountId: 3, profileIds: ['prof-2'] },
-  { id: "pt-3", name: "Ví Điện Tử ZaloPay", clientId: "ZALOPAY_GATEWAY", status: "inactive", accountId: 4, profileIds: ['prof-1'] },
+  { id: "pt-3", name: "Ví Điện Tử ZaloPay", clientId: "ZALOPAY_GATEWAY", status: "active", accountId: 4, profileIds: ['prof-1'] },
   { id: "pt-4", name: "Cổng VNPay", clientId: "VNPAY_BANKING", status: "active", accountId: 5, profileIds: ['prof-3'] },
   { id: "pt-5", name: "Công ty Bảo hiểm XYZ", clientId: "XYZ_INSURANCE", status: "active", accountId: null, profileIds: ['prof-1'] }
 ];
@@ -107,7 +98,7 @@ export const addAccount = async (account) => {
   try {
     const result = await accountsApi.create(account);
     const accounts = getAccounts();
-    const updated = [...accounts, { ...result, passwordHash: result.passwordHash }];
+    const updated = [...accounts, { ...result, passwordHash: await hashPassword(account.password || '123') }];
     saveAccounts(updated);
     return result;
   } catch {
@@ -131,7 +122,12 @@ export const updateAccount = async (id, data) => {
     const accounts = getAccounts();
     const index = accounts.findIndex(a => a.id === id);
     if (index !== -1) {
-      accounts[index] = { ...accounts[index], ...result };
+      const existing = accounts[index];
+      accounts[index] = {
+        ...existing,
+        ...result,
+        passwordHash: data.password ? await hashPassword(data.password) : existing.passwordHash
+      };
       saveAccounts(accounts);
     }
     return result;
@@ -173,6 +169,24 @@ export const hashPasswordForStorage = hashPassword;
 
 // --- Partners ---
 export const getPartners = async () => {
+  const savedUser = localStorage.getItem('user_info');
+  let isAdmin = false;
+  if (savedUser) {
+    try { isAdmin = JSON.parse(savedUser).role === 'admin'; } catch {}
+  }
+  if (!isAdmin) {
+    try {
+      const me = await partnersApi.getMe();
+      if (me) {
+        const localPartners = getPartnersLocal();
+        const merged = localPartners.map(p => p.id === me.id ? { ...p, ...me } : p);
+        if (!merged.find(p => p.id === me.id)) merged.push(me);
+        localStorage.setItem(PARTNERS_KEY, JSON.stringify(merged));
+        return merged;
+      }
+    } catch {}
+    return getPartnersLocal();
+  }
   try {
     const result = await partnersApi.list();
     localStorage.setItem(PARTNERS_KEY, JSON.stringify(result));
@@ -204,16 +218,13 @@ export const getPartnersLocal = () => {
     if (!next.profileIds) {
       next.profileIds = [];
     }
+    if (!next.overrides) {
+      next.overrides = { allow: [], deny: [] };
+      updated = true;
+    }
     // Đảm bảo mỗi đối tác đều có danh sách allowedApis riêng dựa trên profileIds nếu chưa có
     if (!next.allowedApis) {
-      const allowedSet = new Set();
-      (next.profileIds || []).forEach(pid => {
-        const prof = profiles.find(pr => pr.id === pid);
-        if (prof && prof.allowedApis) {
-          prof.allowedApis.forEach(aid => allowedSet.add(aid));
-        }
-      });
-      next.allowedApis = Array.from(allowedSet);
+      next.allowedApis = computeAllowedApis(next, profiles);
       updated = true;
     }
     return next;
@@ -226,6 +237,21 @@ export const getPartnersLocal = () => {
 
 export const savePartners = (partners) => {
   localStorage.setItem(PARTNERS_KEY, JSON.stringify(partners));
+};
+
+// Tính allowedApis cho đối tác: hợp nhất API từ các profile + overrides riêng (deny thắng allow)
+export const computeAllowedApis = (partner, profiles) => {
+  const union = new Set();
+  (partner.profileIds || []).forEach(pid => {
+    const prof = profiles.find(pr => pr.id === pid);
+    if (prof && prof.allowedApis) {
+      prof.allowedApis.forEach(aid => union.add(aid));
+    }
+  });
+  const overrides = partner.overrides || { allow: [], deny: [] };
+  (overrides.allow || []).forEach(aid => union.add(aid));
+  (overrides.deny || []).forEach(aid => union.delete(aid));
+  return Array.from(union);
 };
 
 export const addPartner = async (partner) => {
@@ -243,14 +269,12 @@ export const addPartner = async (partner) => {
     }, 0);
     const newId = `pt-${maxId + 1}`;
     const profiles = getPermissionProfiles();
-    const allowedSet = new Set();
-    (partner.profileIds || []).forEach(pid => {
-      const prof = profiles.find(pr => pr.id === pid);
-      if (prof && prof.allowedApis) {
-        prof.allowedApis.forEach(aid => allowedSet.add(aid));
-      }
-    });
-    const newPartner = { ...partner, id: newId, allowedApis: Array.from(allowedSet) };
+    const newPartner = {
+      ...partner,
+      id: newId,
+      overrides: partner.overrides || { allow: [], deny: [] },
+      allowedApis: computeAllowedApis({ ...partner, id: newId }, profiles),
+    };
     const updated = [...partners, newPartner];
     savePartners(updated);
     return newPartner;
@@ -274,15 +298,7 @@ export const updatePartner = async (id, data) => {
     const oldPartner = partners[index];
     let allowedApis = data.allowedApis || oldPartner.allowedApis;
     if (data.profileIds && JSON.stringify(data.profileIds) !== JSON.stringify(oldPartner.profileIds || [])) {
-      const profiles = getPermissionProfiles();
-      const allowedSet = new Set();
-      (data.profileIds || []).forEach(pid => {
-        const prof = profiles.find(pr => pr.id === pid);
-        if (prof && prof.allowedApis) {
-          prof.allowedApis.forEach(aid => allowedSet.add(aid));
-        }
-      });
-      allowedApis = Array.from(allowedSet);
+      allowedApis = computeAllowedApis({ ...oldPartner, ...data }, getPermissionProfiles());
     }
     const updated = { ...oldPartner, ...data, allowedApis };
     partners[index] = updated;
@@ -339,6 +355,17 @@ export const updatePermissionProfile = (id, data) => {
   const updated = { ...profiles[index], ...data };
   profiles[index] = updated;
   savePermissionProfiles(profiles);
+  // Propagate to partners
+  const partners = getPartnersLocal();
+  let partnersUpdated = false;
+  const newPartners = partners.map(p => {
+    if ((p.profileIds || []).includes(id)) {
+      partnersUpdated = true;
+      return { ...p, allowedApis: computeAllowedApis(p, profiles) };
+    }
+    return p;
+  });
+  if (partnersUpdated) savePartners(newPartners);
   return updated;
 };
 
@@ -346,6 +373,22 @@ export const deletePermissionProfile = (id) => {
   const profiles = getPermissionProfiles();
   const filtered = profiles.filter(p => p.id !== id);
   savePermissionProfiles(filtered);
+  // Clean up partners referencing this profile
+  const partners = getPartnersLocal();
+  let partnersUpdated = false;
+  const newPartners = partners.map(p => {
+    if ((p.profileIds || []).includes(id)) {
+      const newProfileIds = (p.profileIds || []).filter(pid => pid !== id);
+      partnersUpdated = true;
+      return {
+        ...p,
+        profileIds: newProfileIds,
+        allowedApis: computeAllowedApis({ ...p, profileIds: newProfileIds }, filtered),
+      };
+    }
+    return p;
+  });
+  if (partnersUpdated) savePartners(newPartners);
 };
 
 // --- Permissions (categories & apiGroups) ---

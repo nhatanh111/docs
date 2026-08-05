@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsNumber } from 'class-validator';
+import { IsString, IsOptional, IsNumber, IsArray } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 
 export class UpdatePartnerDto {
@@ -26,4 +26,20 @@ export class UpdatePartnerDto {
   @IsOptional()
   @IsNumber()
   accountId?: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  profileIds?: string[];
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  allowedApis?: string[];
+
+  @ApiPropertyOptional({ example: { allow: [], deny: ['api-1'] } })
+  @IsOptional()
+  overrides?: { allow?: string[]; deny?: string[] };
 }

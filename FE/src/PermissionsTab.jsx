@@ -13,6 +13,7 @@ import {
   getPartners,
   getPartnersLocal,
   savePartners,
+  computeAllowedApis,
   addUploadedEndpoints,
   deleteUploadedEndpoint,
   getUploadedEndpoints
@@ -49,6 +50,7 @@ const groupByCategory = (endpoints) => {
 function MultiProfileDropdown({ profiles, value = [], onChange }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
+  const { t } = useTranslation();
   const ref = useRef(null);
 
   const selectedProfiles = profiles.filter(p => value.includes(p.id));
@@ -84,7 +86,7 @@ function MultiProfileDropdown({ profiles, value = [], onChange }) {
       >
         <div className="flex items-center gap-1 flex-wrap flex-1 min-w-0">
           {selectedProfiles.length === 0 ? (
-            <span className="text-slate-400 font-normal">-- Chưa gán --</span>
+            <span className="text-slate-400 font-normal">{t('permissions.not_assigned', '-- Not assigned --')}</span>
           ) : selectedProfiles.length <= 2 ? (
             selectedProfiles.map(sp => (
               <span key={sp.id} className="bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded text-[10px] font-semibold truncate max-w-[100px]">{sp.name}</span>
@@ -113,7 +115,7 @@ function MultiProfileDropdown({ profiles, value = [], onChange }) {
               <input
                 autoFocus
                 type="text"
-                placeholder="Tìm nhóm quyền..."
+                placeholder={t('permissions.search_profiles', 'Search groups...')}
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 className="w-full pl-7 pr-3 py-1.5 text-xs bg-white border border-slate-200 rounded-lg outline-none focus:border-blue-400"
@@ -124,7 +126,7 @@ function MultiProfileDropdown({ profiles, value = [], onChange }) {
           {/* Option list */}
           <div className="max-h-64 overflow-y-auto">
             {filtered.length === 0 && (
-              <div className="text-center py-6 text-xs text-slate-400">Không tìm thấy nhóm quyền nào</div>
+              <div className="text-center py-6 text-xs text-slate-400">{t('permissions.no_profiles_found', 'No groups found')}</div>
             )}
 
             {filtered.map(prof => {
@@ -154,39 +156,40 @@ function MultiProfileDropdown({ profiles, value = [], onChange }) {
 // Modal Thêm/Sửa Nhóm quyền
 
 function ProfileModal({ isOpen, mode, currentProfile, setCurrentProfile, onSave, onClose }) {
+  const { t } = useTranslation();
   if (!isOpen) return null;
   return (
     <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-xl shadow-xl max-w-md w-full overflow-hidden">
         <div className="p-5 border-b border-slate-100 flex justify-between items-center">
           <div>
-            <h3 className="font-bold text-slate-800">{mode === 'add' ? 'Thêm Nhóm Quyền Mới' : 'Sửa Nhóm Quyền'}</h3>
-            <p className="text-slate-400 text-xs">Cấu hình tên và mô tả nhóm quyền tích hợp</p>
+            <h3 className="font-bold text-slate-800">{mode === 'add' ? t('permissions.add_profile', 'Add New Profile') : t('permissions.edit_profile', 'Edit Profile')}</h3>
+            <p className="text-slate-400 text-xs">{t('permissions.profile_form_description', 'Configure profile name and description')}</p>
           </div>
           <button onClick={onClose} className="text-slate-400 hover:text-slate-600 bg-transparent border-0 cursor-pointer text-lg">✕</button>
         </div>
         <form onSubmit={onSave} className="p-5 space-y-4">
           <div>
-            <label className="text-[10px] font-bold text-slate-500 uppercase block mb-1">Tên nhóm quyền *</label>
+            <label className="text-[10px] font-bold text-slate-500 uppercase block mb-1">{t('permissions.profile_name_label', 'Profile Name *')}</label>
             <input
-              type="text" required placeholder="VD: Đối tác Bán lẻ Xe Máy"
+              type="text" required placeholder={t('permissions.profile_name_placeholder', 'E.g., Motorcycle Retail Partner')}
               value={currentProfile.name || ''}
               onChange={(e) => setCurrentProfile({ ...currentProfile, name: e.target.value })}
               className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3.5 py-2 text-sm font-semibold outline-none focus:border-blue-400"
             />
           </div>
           <div>
-            <label className="text-[10px] font-bold text-slate-500 uppercase block mb-1">Mô tả nhóm quyền</label>
+            <label className="text-[10px] font-bold text-slate-500 uppercase block mb-1">{t('permissions.profile_description_label', 'Profile Description')}</label>
             <textarea
-              rows="3" placeholder="Mô tả các API được phép truy cập trong nhóm này..."
+              rows="3" placeholder={t('permissions.profile_description_placeholder', 'Describe the APIs allowed in this group...')}
               value={currentProfile.description || ''}
               onChange={(e) => setCurrentProfile({ ...currentProfile, description: e.target.value })}
               className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3.5 py-2 text-sm resize-none outline-none focus:border-blue-400"
             />
           </div>
           <div className="pt-2 border-t border-slate-100 flex justify-end gap-2">
-            <button type="button" onClick={onClose} className="bg-slate-100 hover:bg-slate-200 text-slate-600 font-medium py-2 px-5 rounded-lg text-sm transition-all">Đóng</button>
-            <button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-5 rounded-lg text-sm transition-all">Lưu</button>
+            <button type="button" onClick={onClose} className="bg-slate-100 hover:bg-slate-200 text-slate-600 font-medium py-2 px-5 rounded-lg text-sm transition-all">{t('common.close', 'Close')}</button>
+            <button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-5 rounded-lg text-sm transition-all">{t('common.save', 'Save')}</button>
           </div>
         </form>
       </div>
@@ -196,6 +199,7 @@ function ProfileModal({ isOpen, mode, currentProfile, setCurrentProfile, onSave,
 
 // Modal Upload file API
 function UploadModal({ isOpen, onClose, onUpload }) {
+  const { t } = useTranslation();
   const [file, setFile] = useState(null);
   const [parsedData, setParsedData] = useState(null);
   const [error, setError] = useState('');
@@ -209,20 +213,41 @@ function UploadModal({ isOpen, onClose, onUpload }) {
       category: row.category || row.Category || row.CATEGORY || row['Danh mục'] || row.danh_muc || row['Nhóm'] || row.nhom || '',
       method: row.method || row.Method || row.METHOD || row['Phương thức'] || row.phuong_thuc || row['HTTP'] || row.http || '',
       path: row.path || row.Path || row.PATH || row['Đường dẫn'] || row.duong_dan || row.endpoint || row.Endpoint || row['API'] || row.api || '',
-      description: row.description || row.Description || row.DESCRIPTION || row['Mô tả'] || row.mo_ta || row.name || row.Name || row['Chức năng'] || '',
+      name: row.name || row.Name || '',
+      description: row.description || row.Description || row.DESCRIPTION || row['Mô tả'] || row.mo_ta || row['Chức năng'] || '',
       requestSample: row.requestSample || row.request_sample || row.RequestSample || row['Request mẫu'] || row['request_sample'] || row['Request'] || null,
       responseFormat: row.responseFormat || row.response_format || row.ResponseFormat || row['Response mẫu'] || row['response_format'] || row['Response'] || null,
     };
     return map;
   };
 
-  const validateEndpoints = (endpoints) => {
-    const valid = endpoints.every(item => item.id && item.category && item.method && item.path);
-    if (!valid) {
-      setError('Mỗi API cần có: id, category, method, path');
-      return false;
-    }
-    return true;
+  const normalizeEndpoints = (endpoints) => {
+    return (endpoints || [])
+      .filter(item => item && Object.values(item).some(v => v !== undefined && v !== null && String(v).trim() !== ''))
+      .map(item => {
+        const method = String(item.method || 'GET').toUpperCase();
+        const rawPath = String(item.path || '');
+        const rawName = String(item.name || item.description || rawPath || '');
+        const name = rawName.length > 60 ? rawName.slice(0, 60).trim() + '…' : rawName;
+        const path = rawPath
+          || ('/' + name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''))
+          || '/';
+        const rawId = item.id ?? item.endpointId;
+        const generatedId = (method + '-' + path).replace(/[^a-zA-Z0-9_-]/g, '_').toLowerCase();
+        const id = typeof rawId === 'string' && rawId.trim() !== '' && !/^\d+$/.test(rawId.trim())
+          ? rawId.trim()
+          : generatedId;
+        return {
+          id,
+          category: item.category || 'CHUNG',
+          method,
+          path,
+          name,
+          description: item.description != null ? item.description : null,
+          requestSample: item.requestSample != null ? item.requestSample : null,
+          responseFormat: item.responseFormat != null ? item.responseFormat : null,
+        };
+      });
   };
 
   const parseJson = (content) => {
@@ -248,7 +273,7 @@ function UploadModal({ isOpen, onClose, onUpload }) {
         }))
       );
     } else {
-      setError('Không tìm thấy danh sách API trong file JSON');
+      setError(t('permissions.no_apis_in_json', 'No APIs found in JSON file'));
       return null;
     }
     return endpoints;
@@ -277,7 +302,7 @@ function UploadModal({ isOpen, onClose, onUpload }) {
         }))
       );
     } else {
-      setError('Không tìm thấy danh sách API trong file YAML');
+      setError(t('permissions.no_apis_in_yaml', 'No APIs found in YAML file'));
       return null;
     }
     return endpoints;
@@ -311,7 +336,7 @@ function UploadModal({ isOpen, onClose, onUpload }) {
           };
         });
       }
-      setError('Không tìm thấy API nào trong file XML');
+      setError(t('permissions.no_apis_in_xml', 'No APIs found in XML file'));
       return null;
     }
     return Array.from(items).map(el => {
@@ -339,29 +364,102 @@ function UploadModal({ isOpen, onClose, onUpload }) {
   };
 
   const parseWord = async (arrayBuffer) => {
-    const result = await mammoth.convertToHtml({ arrayBuffer });
-    const html = result.value;
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(html, 'text/html');
-    const tables = doc.querySelectorAll('table');
-    if (tables.length === 0) {
-      setError('Không tìm thấy bảng nào trong file Word. Vui lòng tạo bảng với header: id, category, method, path.');
-      return null;
+    const result = await mammoth.extractRawText({ arrayBuffer });
+    const lines = (result.value || '').split('\n').map(l => l.trim()).filter(Boolean);
+    const endpoints = [];
+    let current = null;
+
+    const pushCurrent = () => {
+      if (current && current.path) endpoints.push(current);
+      current = null;
+    };
+    const ensureCurrent = () => {
+      if (!current) current = { name: '', category: '', method: '', path: '' };
+      return current;
+    };
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+
+      if (line.includes('\t')) continue;
+
+      const headingMatch = line.match(/^\d+\.\s*(API\s+.+)$/i);
+      if (headingMatch) {
+        pushCurrent();
+        current = { name: headingMatch[1].trim(), category: '', method: '', path: '' };
+        continue;
+      }
+
+      if (/^mô tả$/i.test(line)) {
+        const next = lines[i + 1];
+        if (next && !/^(đường dẫn|phương thức|field|tham số|giá trị|diễn giải|bắt buộc|kiểu dữ liệu|url|http|statusCode)/i.test(next)) {
+          if (current && current.path) pushCurrent();
+          ensureCurrent();
+          if (!current.name) current.name = next;
+          else if (current.name !== next) current.description = next;
+        }
+        continue;
+      }
+
+      if (/^mô tả:/i.test(line)) {
+        const v = line.replace(/^mô tả:\s*/i, '');
+        if (v) {
+          if (current && current.path) pushCurrent();
+          ensureCurrent();
+          if (!current.name) current.name = v;
+          else if (current.name !== v) current.description = v;
+        }
+        continue;
+      }
+
+      if (/^đường dẫn$/i.test(line)) {
+        const v = lines[i + 1] || '';
+        if (v.includes('/')) {
+          ensureCurrent();
+          current.path = v;
+        }
+        continue;
+      }
+
+      if (/^phương thức$/i.test(line)) {
+        const v = (lines[i + 1] || '').toUpperCase();
+        if (/^(GET|POST|PUT|DELETE|PATCH)$/.test(v)) {
+          ensureCurrent();
+          current.method = v;
+        }
+        continue;
+      }
+
+      const curlUrl = line.match(/curl.*?['"]((?:\{URL\}|\$BASE|https?:\/\/)[^'"]+)['"]/i);
+      if (curlUrl && (!current || !current.path)) {
+        const curlMethod = line.match(/curl\s+-X\s+(GET|POST|PUT|DELETE|PATCH)/i);
+        const p = curlUrl[1]
+          .replace(/^\{URL\}/i, '')
+          .replace(/^\$BASE/, '')
+          .replace(/^https:\/\/api-admin\.pviplus\.com\.vn/, '');
+        if (p.startsWith('/')) {
+          ensureCurrent();
+          current.path = p;
+          if (curlMethod) current.method = curlMethod[1].toUpperCase();
+        }
+      }
     }
-    // Parse first table
-    const table = tables[0];
-    const headers = Array.from(table.querySelectorAll('tr:first-child th, tr:first-child td')).map(th => th.textContent.trim());
-    const rows = Array.from(table.querySelectorAll('tr')).slice(1);
-    if (rows.length === 0) {
-      setError('Bảng trong file Word không có dòng dữ liệu');
-      return null;
+    pushCurrent();
+    return endpoints;
+  };
+
+  const autoUpload = (endpoints) => {
+    if (!endpoints) return;
+    const normalized = normalizeEndpoints(endpoints);
+    if (normalized.length === 0) {
+      setError(t('permissions.no_apis_in_json', 'No APIs found in the file'));
+      return;
     }
-    return rows.map(row => {
-      const cells = Array.from(row.querySelectorAll('td, th'));
-      const obj = {};
-      headers.forEach((h, i) => { obj[h] = (cells[i]?.textContent || '').trim(); });
-      return normalizeRow(obj);
-    });
+    const fileName = file ? file.name.replace(/\.[^.]+$/, '') : t('permissions.api_from_file', 'API set from file');
+    onUpload(normalized, fileName);
+    setParsedData(null);
+    setFile(null);
+    onClose();
   };
 
   const handleFileChange = (e) => {
@@ -377,57 +475,45 @@ function UploadModal({ isOpen, onClose, onUpload }) {
       const reader = new FileReader();
       reader.onload = (event) => {
         try {
-          const endpoints = parseJson(event.target.result);
-          if (!endpoints || !validateEndpoints(endpoints)) return;
-          setParsedData(endpoints);
+          autoUpload(parseJson(event.target.result));
         } catch (e) {
-          setError('Lỗi đọc file JSON: ' + e.message);
+          setError(t('permissions.read_file_error', 'Error reading JSON:') + ' ' + e.message);
         }
       };
-      reader.onerror = () => setError('Lỗi đọc file');
+      reader.onerror = () => setError(t('permissions.read_file_error_generic', 'Error reading file'));
       reader.readAsText(selectedFile);
     } else if (['yaml', 'yml'].includes(ext)) {
       const reader = new FileReader();
       reader.onload = (event) => {
         try {
-          const endpoints = parseYaml(event.target.result);
-          if (!endpoints || !validateEndpoints(endpoints)) return;
-          setParsedData(endpoints);
+          autoUpload(parseYaml(event.target.result));
         } catch (e) {
-          setError('Lỗi đọc file YAML: ' + e.message);
+          setError(t('permissions.read_file_error', 'Error reading YAML:') + ' ' + e.message);
         }
       };
-      reader.onerror = () => setError('Lỗi đọc file');
+      reader.onerror = () => setError(t('permissions.read_file_error_generic', 'Error reading file'));
       reader.readAsText(selectedFile);
     } else if (ext === 'xml') {
       const reader = new FileReader();
       reader.onload = (event) => {
         try {
-          const endpoints = parseXml(event.target.result);
-          if (!endpoints || !validateEndpoints(endpoints)) return;
-          setParsedData(endpoints);
+          autoUpload(parseXml(event.target.result));
         } catch (e) {
-          setError('Lỗi đọc file XML: ' + e.message);
+          setError(t('permissions.read_file_error', 'Error reading XML:') + ' ' + e.message);
         }
       };
-      reader.onerror = () => setError('Lỗi đọc file');
+      reader.onerror = () => setError(t('permissions.read_file_error_generic', 'Error reading file'));
       reader.readAsText(selectedFile);
     } else if (['xlsx', 'xls', 'csv'].includes(ext)) {
       const reader = new FileReader();
       reader.onload = (event) => {
         try {
-          const endpoints = parseExcel(event.target.result);
-          const missing = endpoints.filter(item => !item.id || !item.category || !item.method || !item.path);
-          if (missing.length > 0) {
-            setError(`Có ${missing.length} dòng thiếu trường bắt buộc (id, category, method, path). Dòng đầu tiên phải là header.`);
-            return;
-          }
-          setParsedData(endpoints);
+          autoUpload(parseExcel(event.target.result));
         } catch (e) {
-          setError('Lỗi đọc file Excel/CSV: ' + e.message);
+          setError(t('permissions.read_file_error', 'Error reading Excel/CSV:') + ' ' + e.message);
         }
       };
-      reader.onerror = () => setError('Lỗi đọc file');
+      reader.onerror = () => setError(t('permissions.read_file_error_generic', 'Error reading file'));
       reader.readAsArrayBuffer(selectedFile);
     } else if (ext === 'docx') {
       const reader = new FileReader();
@@ -435,30 +521,16 @@ function UploadModal({ isOpen, onClose, onUpload }) {
         try {
           const endpoints = await parseWord(event.target.result);
           if (!endpoints) return;
-          const missing = endpoints.filter(item => !item.id || !item.category || !item.method || !item.path);
-          if (missing.length > 0) {
-            setError(`Có ${missing.length} dòng thiếu trường bắt buộc. Kiểm tra header bảng (cần: id, category, method, path).`);
-            return;
-          }
-          setParsedData(endpoints);
+          autoUpload(endpoints);
         } catch (e) {
-          setError('Lỗi đọc file Word: ' + e.message);
+          setError(t('permissions.read_file_error', 'Error reading Word:') + ' ' + e.message);
         }
       };
-      reader.onerror = () => setError('Lỗi đọc file');
+      reader.onerror = () => setError(t('permissions.read_file_error_generic', 'Error reading file'));
       reader.readAsArrayBuffer(selectedFile);
     } else {
-      setError('Định dạng file không hỗ trợ. Chấp nhận: JSON, YAML, XML, Excel, CSV, Word (.docx)');
+      setError(t('permissions.unsupported_format', 'Unsupported file format. Accepted: JSON, YAML, XML, Excel, CSV, Word (.docx)'));
     }
-  };
-
-  const handleUpload = () => {
-    if (!parsedData) return;
-    const fileName = file ? file.name.replace(/\.[^.]+$/, '') : 'Bộ API từ file';
-    onUpload(parsedData, fileName);
-    setParsedData(null);
-    setFile(null);
-    onClose();
   };
 
   if (!isOpen) return null;
@@ -468,8 +540,8 @@ function UploadModal({ isOpen, onClose, onUpload }) {
       <div className="bg-white rounded-xl shadow-xl max-w-lg w-full overflow-hidden">
         <div className="p-5 border-b border-slate-100 flex justify-between items-center">
           <div>
-            <h3 className="font-bold text-slate-800">Upload file API</h3>
-            <p className="text-slate-400 text-xs">Tải lên file để giải nén danh sách API</p>
+            <h3 className="font-bold text-slate-800">{t('permissions.upload_title')}</h3>
+            <p className="text-slate-400 text-xs">{t('permissions.upload_subtitle')}</p>
           </div>
           <button onClick={onClose} className="text-slate-400 hover:text-slate-600 bg-transparent border-0 cursor-pointer text-lg">✕</button>
         </div>
@@ -478,9 +550,9 @@ function UploadModal({ isOpen, onClose, onUpload }) {
             <input type="file" accept={SUPPORTED_FORMATS} onChange={handleFileChange} className="hidden" id="file-upload-input" />
             <label htmlFor="file-upload-input" className="cursor-pointer block">
               <div className="text-4xl mb-2">📂</div>
-              <p className="font-bold text-slate-700 text-sm">Click để chọn file</p>
+              <p className="font-bold text-slate-700 text-sm">{t('permissions.click_to_select_file', 'Click để chọn file')}</p>
               <p className="text-xs text-slate-400 mt-1">
-                Hỗ trợ: <strong>JSON</strong>, <strong>YAML</strong>, <strong>XML</strong>, <strong>Excel</strong>, <strong>CSV</strong>, <strong>Word</strong>
+                {t('permissions.upload_supported')}
               </p>
             </label>
           </div>
@@ -490,39 +562,9 @@ function UploadModal({ isOpen, onClose, onUpload }) {
               <span>❌</span> {error}
             </div>
           )}
-
-          {parsedData && !error && (
-            <div className="bg-emerald-50 text-emerald-700 p-3 rounded-lg text-xs font-semibold flex items-center gap-2">
-              <span>✅</span> Đã đọc <strong>{parsedData.length}</strong> API từ file
-              <button
-                type="button"
-                onClick={() => { setParsedData(null); setFile(null); }}
-                className="ml-auto bg-transparent border-0 cursor-pointer text-xs text-slate-400 hover:text-slate-600"
-              >✕</button>
-            </div>
-          )}
-
-          {parsedData && !error && (
-            <div className="max-h-40 overflow-y-auto border border-slate-100 rounded-lg divide-y divide-slate-100">
-              {parsedData.map((ep, i) => (
-                <div key={i} className="px-3 py-1.5 flex items-center gap-2 text-xs">
-                  <span className={`text-[8px] px-1 py-0.5 rounded font-black text-white ${methodBadgeClass(ep.method)}`}>{ep.method}</span>
-                  <span className="font-mono text-slate-600">{ep.path}</span>
-                  <span className="text-slate-400 ml-auto">{ep.category}</span>
-                </div>
-              ))}
-            </div>
-          )}
         </div>
-        <div className="p-5 border-t border-slate-100 flex justify-end gap-2">
-          <button onClick={onClose} className="bg-slate-100 hover:bg-slate-200 text-slate-600 font-medium py-2 px-5 rounded-lg text-sm transition-all">Đóng</button>
-          <button
-            onClick={handleUpload}
-            disabled={!parsedData || !!error}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-5 rounded-lg text-sm transition-all disabled:opacity-50"
-          >
-            Xem trước
-          </button>
+        <div className="p-5 border-t border-slate-100 flex justify-end">
+          <button onClick={onClose} className="bg-slate-100 hover:bg-slate-200 text-slate-600 font-medium py-2 px-5 rounded-lg text-sm transition-all">{t('common.close', 'Close')}</button>
         </div>
       </div>
     </div>
@@ -554,7 +596,7 @@ export default function PermissionsTab({ partners, setPartners, accounts, initia
   // Upload preview
   const [previewEndpoints, setPreviewEndpoints] = useState([]);
   const [previewFileName, setPreviewFileName] = useState('');
-  const [previewExpanded, setPreviewExpanded] = useState(true);
+
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [uploadNotification, setUploadNotification] = useState(null);
   const [expandedPartnerId, setExpandedPartnerId] = useState(null);
@@ -621,6 +663,19 @@ export default function PermissionsTab({ partners, setPartners, accounts, initia
   };
 
   // Bật/Tắt quyền gọi API trong profile
+  const propagateProfileToPartners = (updatedProfiles, profileId) => {
+    const allPartners = getPartnersLocal();
+    const newPartners = allPartners.map(p => {
+      if (!(p.profileIds || []).includes(profileId)) return p;
+      return { ...p, allowedApis: computeAllowedApis(p, updatedProfiles) };
+    });
+    savePartners(newPartners);
+    setPartners(newPartners);
+    newPartners
+      .filter(p => (p.profileIds || []).includes(profileId))
+      .forEach(p => updatePartnerProfile(p.id, p));
+  };
+
   const handleToggleApi = (profileId, apiId) => {
     const updatedProfiles = profiles.map(p => {
       if (p.id === profileId) {
@@ -635,6 +690,7 @@ export default function PermissionsTab({ partners, setPartners, accounts, initia
     });
     setProfiles(updatedProfiles);
     savePermissionProfiles(updatedProfiles);
+    propagateProfileToPartners(updatedProfiles, profileId);
   };
 
   // Chọn nhanh Bật tất cả / Tắt tất cả API cho category (Chỉ áp dụng với kết quả lọc hiện tại nếu đang search)
@@ -643,13 +699,17 @@ export default function PermissionsTab({ partners, setPartners, accounts, initia
     const filteredApisOfCat = apisOfCat.filter(ep => {
       if (!apiSearchQuery) return true;
       const q = apiSearchQuery.toLowerCase();
+      const desc = t(ep.description) || ep.description || '';
       return (
         ep.path?.toLowerCase().includes(q) ||
-        t(ep.description)?.toLowerCase().includes(q) ||
+        desc.toLowerCase().includes(q) ||
         ep.method?.toLowerCase().includes(q)
       );
     });
-    const apiIdsToToggle = filteredApisOfCat.map(ep => ep.id);
+    // API cốt lõi (coreApiIds) không được gỡ bằng "Bỏ hết" — chỉ tắt được riêng lẻ
+    const apiIdsToToggle = filteredApisOfCat
+      .filter(ep => !(action === 'deny' && coreApiIds.current.has(ep.id)))
+      .map(ep => ep.id);
 
     const updatedProfiles = profiles.map(p => {
       if (p.id === profileId) {
@@ -666,6 +726,7 @@ export default function PermissionsTab({ partners, setPartners, accounts, initia
     });
     setProfiles(updatedProfiles);
     savePermissionProfiles(updatedProfiles);
+    propagateProfileToPartners(updatedProfiles, profileId);
   };
 
   // CRUD Profiles
@@ -689,20 +750,31 @@ export default function PermissionsTab({ partners, setPartners, accounts, initia
       setSelectedProfileId(newProfile.id);
     } else {
       const updated = updatePermissionProfile(currentProfile.id, currentProfile);
-      setProfiles(profiles.map(p => p.id === updated.id ? updated : p));
+      const nextProfiles = profiles.map(p => p.id === updated.id ? updated : p);
+      setProfiles(nextProfiles);
+      propagateProfileToPartners(nextProfiles, currentProfile.id);
     }
     setIsModalOpen(false);
   };
 
   const handleDeleteProfile = (id) => {
     if (['prof-1', 'prof-4'].includes(id)) {
-      alert('❌ Không thể xóa nhóm quyền hệ thống mặc định!');
+      alert(t('permissions.cannot_delete_default', '❌ Không thể xóa nhóm quyền hệ thống mặc định!'));
       return;
     }
-    if (!window.confirm('Xóa nhóm quyền này? Các đối tác thuộc nhóm này sẽ mất cấu hình quyền.')) return;
+    if (!window.confirm(t('permissions.delete_profile_confirm', 'Xóa nhóm quyền này? Các đối tác thuộc nhóm này sẽ mất cấu hình quyền.'))) return;
+    const affectedIds = getPartnersLocal()
+      .filter(p => (p.profileIds || []).includes(id))
+      .map(p => p.id);
     deletePermissionProfile(id);
     setProfiles(profiles.filter(p => p.id !== id));
     if (selectedProfileId === id) setSelectedProfileId(null);
+    const allPartners = getPartnersLocal();
+    setPartners(allPartners);
+    affectedIds.forEach(pid => {
+      const p = allPartners.find(x => x.id === pid);
+      if (p) updatePartnerProfile(pid, p);
+    });
   };
 
   // Upload file — giải nén API ra trang xem trước
@@ -711,49 +783,55 @@ export default function PermissionsTab({ partners, setPartners, accounts, initia
     setPreviewFileName(fileName);
     setUploadNotification({
       type: 'success',
-      message: `✅ Đã giải nén ${endpoints.length} API từ file "${fileName}"`
+      message: t('permissions.upload_success_detail', { count: endpoints.length, name: fileName })
     });
   };
 
   // Tạo nhóm quyền từ preview
-  const handleCreateProfileFromPreview = () => {
+  const handleCreateProfileFromPreview = async () => {
     if (previewEndpoints.length === 0) return;
     const result = addUploadedEndpoints(previewEndpoints);
     const newProfile = addPermissionProfile({
       name: previewFileName,
-      description: `Được tạo từ file upload — ${result.updated.length} API`,
-      allowedApis: result.updated.map(ep => ep.id)
+      description: `Được tạo từ file upload — ${previewEndpoints.length} API`,
+      allowedApis: previewEndpoints.map(ep => ep.id)
     });
     setProfiles([...profiles, newProfile]);
     setSelectedProfileId(newProfile.id);
     setPreviewEndpoints([]);
     setPreviewFileName('');
     setUploadedVersion(v => v + 1);
-    const newCategories = [...new Set(result.updated.map(ep => ep.category))];
+    const newCategories = [...new Set(previewEndpoints.map(ep => ep.category))];
     setExpandedCategories(prev => {
       const next = { ...prev };
       newCategories.forEach(cat => { next[cat] = true; });
       return next;
     });
+    const skipMsg = result.skipped > 0 ? t('permissions.skipped_apis', { count: result.skipped }) : '';
     setUploadNotification({
       type: 'success',
-      message: `✅ Đã tạo nhóm quyền "${previewFileName}" với ${result.updated.length} API${result.skipped > 0 ? ` (bỏ qua ${result.skipped} API trùng ID)` : ''}`
+      message: t('permissions.created_profile_notification', { name: previewFileName, count: previewEndpoints.length }) + skipMsg
     });
+    try {
+      const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const token = localStorage.getItem('token');
+      await fetch(`${API_BASE}/api/documents/upload`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ endpoints: previewEndpoints }),
+      });
+    } catch {}
   };
 
   // Mapping Partner -> Profiles (multi-select)
   const handlePartnerProfileChange = (partnerId, profileIds) => {
-    const allowedSet = new Set();
-    (profileIds || []).forEach(pid => {
-      const prof = profiles.find(p => p.id === pid);
-      if (prof && prof.allowedApis) {
-        prof.allowedApis.forEach(aid => allowedSet.add(aid));
-      }
-    });
-    const allowedApis = Array.from(allowedSet);
     const updatedPartners = partners.map(p => {
       if (p.id === partnerId) {
-        const updatedPartner = { ...p, profileIds: profileIds || [], allowedApis };
+        const updatedPartner = { ...p, profileIds: profileIds || [] };
+        updatedPartner.allowedApis = computeAllowedApis(updatedPartner, profiles);
         updatePartnerProfile(partnerId, updatedPartner);
         return updatedPartner;
       }
@@ -762,25 +840,59 @@ export default function PermissionsTab({ partners, setPartners, accounts, initia
     setPartners(updatedPartners);
   };
 
-  // Helper update partner in local storage
-  const updatePartnerProfile = (partnerId, data) => {
+  // Helper update partner in local storage + sync to BE
+  const updatePartnerProfile = async (partnerId, data) => {
     const allPartners = getPartnersLocal();
     const index = allPartners.findIndex(p => p.id === partnerId);
     if (index !== -1) {
       allPartners[index] = data;
       savePartners(allPartners);
     }
+    try {
+      const token = localStorage.getItem('token');
+      const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      await fetch(`${API_BASE}/api/admin/partners/${partnerId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          profileIds: data.profileIds || [],
+          allowedApis: data.allowedApis || [],
+          overrides: data.overrides || { allow: [], deny: [] },
+        }),
+      });
+    } catch {}
   };
 
   // Toggle API cho từng đối tác (override profile)
   const handlePartnerApiToggle = (partnerId, apiId) => {
     const updatedPartners = partners.map(p => {
       if (p.id !== partnerId) return p;
-      const current = p.allowedApis || [];
-      const next = current.includes(apiId)
-        ? current.filter(id => id !== apiId)
-        : [...current, apiId];
-      const updated = { ...p, allowedApis: next };
+      const union = new Set();
+      (p.profileIds || []).forEach(pid => {
+        const prof = profiles.find(pr => pr.id === pid);
+        if (prof && prof.allowedApis) {
+          prof.allowedApis.forEach(aid => union.add(aid));
+        }
+      });
+      const overrides = {
+        allow: [...(p.overrides?.allow || [])],
+        deny: [...(p.overrides?.deny || [])],
+      };
+      if (union.has(apiId)) {
+        overrides.deny = overrides.deny.includes(apiId)
+          ? overrides.deny.filter(x => x !== apiId)
+          : [...overrides.deny, apiId];
+        overrides.allow = overrides.allow.filter(x => x !== apiId);
+      } else {
+        overrides.allow = overrides.allow.includes(apiId)
+          ? overrides.allow.filter(x => x !== apiId)
+          : [...overrides.allow, apiId];
+        overrides.deny = overrides.deny.filter(x => x !== apiId);
+      }
+      const updated = { ...p, overrides, allowedApis: computeAllowedApis({ ...p, overrides }, profiles) };
       updatePartnerProfile(partnerId, updated);
       return updated;
     });
@@ -804,11 +916,27 @@ export default function PermissionsTab({ partners, setPartners, accounts, initia
 
     const updatedPartners = partners.map(p => {
       if (p.id !== partnerId) return p;
-      const current = p.allowedApis || [];
-      const next = action === 'allow'
-        ? Array.from(new Set([...current, ...apiIdsToToggle]))
-        : current.filter(id => !apiIdsToToggle.includes(id));
-      const updated = { ...p, allowedApis: next };
+      const union = new Set();
+      (p.profileIds || []).forEach(pid => {
+        const prof = profiles.find(pr => pr.id === pid);
+        if (prof && prof.allowedApis) {
+          prof.allowedApis.forEach(aid => union.add(aid));
+        }
+      });
+      const overrides = {
+        allow: [...(p.overrides?.allow || [])],
+        deny: [...(p.overrides?.deny || [])],
+      };
+      apiIdsToToggle.forEach(apiId => {
+        if (action === 'allow') {
+          if (!union.has(apiId) && !overrides.allow.includes(apiId)) overrides.allow.push(apiId);
+          overrides.deny = overrides.deny.filter(x => x !== apiId);
+        } else {
+          if (union.has(apiId) && !overrides.deny.includes(apiId)) overrides.deny.push(apiId);
+          overrides.allow = overrides.allow.filter(x => x !== apiId);
+        }
+      });
+      const updated = { ...p, overrides, allowedApis: computeAllowedApis({ ...p, overrides }, profiles) };
       updatePartnerProfile(partnerId, updated);
       return updated;
     });
@@ -820,44 +948,23 @@ export default function PermissionsTab({ partners, setPartners, accounts, initia
       {/* Header & Tabs */}
       <div className="flex items-center justify-between border-b border-slate-200 pb-3 flex-wrap gap-4">
         <div>
-          <h2 className="text-lg font-bold text-slate-800">Quản lý bộ API</h2>
-          <p className="text-xs text-slate-400">Quản lý nhóm quyền tích hợp và cấu hình API cho đối tác</p>
+          <h2 className="text-lg font-bold text-slate-800">{t('permissions.title')}</h2>
+          <p className="text-xs text-slate-400">{t('permissions.subtitle')}</p>
         </div>
         <div className="flex bg-slate-100 p-0.5 rounded-xl border border-slate-200 text-xs font-bold">
           <button
             onClick={() => setSubTab('profiles')}
             className={`px-4 py-2 rounded-lg cursor-pointer transition-all border-0 ${subTab === 'profiles' ? 'bg-white text-blue-700 shadow-sm' : 'text-slate-500 bg-transparent'}`}
           >
-            🛡️ Quản lý Nhóm Quyền ({profiles.length})
+            🛡️ {t('permissions.manage_profiles', 'Quản lý Nhóm Quyền')} ({profiles.length})
           </button>
           <button
             onClick={() => setSubTab('mapping')}
             className={`px-4 py-2 rounded-lg cursor-pointer transition-all border-0 ${subTab === 'mapping' ? 'bg-white text-blue-700 shadow-sm' : 'text-slate-500 bg-transparent'}`}
           >
-            🤝 Gán quyền cho Đối tác ({partners.length})
+            🤝 {t('permissions.assign_to_partners', 'Gán quyền cho Đối tác')} ({partners.length})
           </button>
         </div>
-      </div>
-
-      {/* Upload notification & button (global — both tabs) */}
-      {uploadNotification && (
-        <div className={`px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 ${
-          uploadNotification.type === 'success' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200'
-        }`}>
-          <span>{uploadNotification.message}</span>
-          <button
-            onClick={() => setUploadNotification(null)}
-            className="ml-auto bg-transparent border-0 cursor-pointer text-xs opacity-60 hover:opacity-100"
-          >✕</button>
-        </div>
-      )}
-      <div className="flex items-center justify-end">
-        <button
-          onClick={() => setIsUploadModalOpen(true)}
-          className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white font-medium text-xs py-2 px-4 rounded-lg transition-all cursor-pointer border-0 shadow-sm"
-        >
-          📤 Upload file API
-        </button>
       </div>
 
       {/* ==================================================== */}
@@ -865,17 +972,36 @@ export default function PermissionsTab({ partners, setPartners, accounts, initia
       {/* ==================================================== */}
       {subTab === 'profiles' && (
         <>
+        {uploadNotification && (
+          <div className={`px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 ${
+            uploadNotification.type === 'success' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200'
+          }`}>
+            <span>{uploadNotification.message}</span>
+            <button
+              onClick={() => setUploadNotification(null)}
+              className="ml-auto bg-transparent border-0 cursor-pointer text-xs opacity-60 hover:opacity-100"
+            >✕</button>
+          </div>
+        )}
+        <div className="flex items-center justify-end mb-3">
+          <button
+            onClick={() => setIsUploadModalOpen(true)}
+            className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white font-medium text-xs py-2 px-4 rounded-lg transition-all cursor-pointer border-0 shadow-sm"
+          >
+            📤 {t('permissions.upload_title')}
+          </button>
+        </div>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           
           {/* List Profiles (Left Side) */}
           <div className="space-y-3 lg:col-span-1">
             <div className="flex justify-between items-center">
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Danh sách nhóm</span>
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">{t('permissions.profile_list', 'Danh sách nhóm')}</span>
               <button
                 onClick={openAddProfile}
                 className="bg-blue-600 hover:bg-blue-700 text-white font-medium text-xs py-1.5 px-3 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer border-0"
               >
-                ➕ Thêm nhóm
+                ➕ {t('permissions.add_group', 'Thêm nhóm')}
               </button>
             </div>
 
@@ -899,7 +1025,7 @@ export default function PermissionsTab({ partners, setPartners, accounts, initia
                         <button
                           onClick={(e) => { e.stopPropagation(); openEditProfile(p); }}
                           className="p-1 rounded text-slate-400 hover:bg-slate-100 hover:text-slate-700 border-0 bg-transparent cursor-pointer"
-                          title="Sửa tên nhóm"
+                          title={t('permissions.edit_group_name', 'Edit group name')}
                         >
                           ✏️
                         </button>
@@ -907,20 +1033,20 @@ export default function PermissionsTab({ partners, setPartners, accounts, initia
                           onClick={(e) => { e.stopPropagation(); handleDeleteProfile(p.id); }}
                           disabled={['prof-1', 'prof-4'].includes(p.id)}
                           className="p-1 rounded text-slate-300 hover:bg-red-50 hover:text-red-500 border-0 bg-transparent cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
-                          title="Xóa nhóm"
+                          title={t('permissions.delete_group', 'Delete group')}
                         >
                           🗑️
                         </button>
                       </div>
                     </div>
-                    <p className="text-slate-400 text-xs mt-1 leading-normal line-clamp-2">{p.description || 'Chưa có mô tả'}</p>
+                    <p className="text-slate-400 text-xs mt-1 leading-normal line-clamp-2">{p.description || t('permissions.no_description', 'Chưa có mô tả')}</p>
                     
                     <div className="flex items-center gap-3 mt-3 text-[10px] font-semibold">
                       <span className="px-2 py-0.5 bg-blue-100 text-blue-800 rounded">
                         {p.allowedApis?.length || 0} API
                       </span>
                       <span className="text-slate-400">
-                        {partnerCount} đối tác áp dụng
+                        {t('permissions.partner_count', '{{count}} partners using', { count: partnerCount })}
                       </span>
                     </div>
                   </div>
@@ -935,12 +1061,12 @@ export default function PermissionsTab({ partners, setPartners, accounts, initia
               <div className="bg-white rounded-2xl border border-slate-200 p-5 space-y-4 text-left">
                 <div className="border-b border-slate-100 pb-3 flex justify-between items-start flex-wrap gap-2">
                   <div>
-                    <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded uppercase tracking-wider">Đang cấu hình</span>
+                    <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded uppercase tracking-wider">{t('permissions.configuring', 'Đang cấu hình')}</span>
                     <h3 className="text-base font-black text-slate-800 mt-1">{selectedProfile.name}</h3>
                     <p className="text-xs text-slate-400 mt-0.5">{selectedProfile.description}</p>
                   </div>
                   <div className="text-xs bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 font-bold text-slate-600">
-                    Cấp quyền: <span className="text-blue-600">{selectedProfile.allowedApis?.length || 0} / {allEndpoints.length}</span> API
+                    {t('permissions.grant_permission', 'Cấp quyền:')} <span className="text-blue-600">{selectedProfile.allowedApis?.length || 0} / {allEndpoints.length}</span> API
                   </div>
                 </div>
 
@@ -948,7 +1074,7 @@ export default function PermissionsTab({ partners, setPartners, accounts, initia
                 <div className="relative" ref={searchRef}>
                   <input
                     type="text"
-                    placeholder="🔍 Tìm nhanh API (đường dẫn, tên nghiệp vụ, method...)"
+                    placeholder={t('permissions.search_api_placeholder', '🔍 Tìm nhanh API (đường dẫn, tên nghiệp vụ, method...)')}
                     value={apiSearchQuery}
                     onChange={(e) => { setApiSearchQuery(e.target.value); if (e.target.value) setShowSuggestions(true); }}
                     onFocus={() => { if (apiSearchQuery) setShowSuggestions(true); }}
@@ -963,7 +1089,7 @@ export default function PermissionsTab({ partners, setPartners, accounts, initia
                       onClick={() => setApiSearchQuery('')}
                       className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs font-bold border-0 bg-transparent cursor-pointer"
                     >
-                      ✕ xóa lọc
+                      ✕ {t('permissions.clear_filter', 'clear filter')}
                     </button>
                   )}
 
@@ -973,7 +1099,8 @@ export default function PermissionsTab({ partners, setPartners, accounts, initia
                     const suggestions = apiSearchQuery
                       ? unassignedApis.filter(ep => {
                           const q = apiSearchQuery.toLowerCase();
-                          return ep.path?.toLowerCase().includes(q) || t(ep.description)?.toLowerCase().includes(q) || ep.method?.toLowerCase().includes(q);
+                          const desc = t(ep.description) || ep.description || '';
+                          return ep.path?.toLowerCase().includes(q) || desc.toLowerCase().includes(q) || ep.method?.toLowerCase().includes(q);
                         })
                       : unassignedApis;
                     const grouped = {};
@@ -985,7 +1112,7 @@ export default function PermissionsTab({ partners, setPartners, accounts, initia
                     return (
                       <div className="absolute z-50 mt-1 w-full bg-white border border-slate-200 rounded-xl shadow-xl max-h-64 overflow-y-auto">
                         {Object.keys(grouped).length === 0 ? (
-                          <div className="p-4 text-xs text-slate-400 text-center italic">Không tìm thấy API nào</div>
+                          <div className="p-4 text-xs text-slate-400 text-center italic">{t('permissions.no_api_found', 'No APIs found')}</div>
                         ) : (
                           Object.entries(grouped).map(([cat, eps]) => (
                             <button
@@ -1014,7 +1141,7 @@ export default function PermissionsTab({ partners, setPartners, accounts, initia
                       const q = apiSearchQuery.toLowerCase();
                       return (
                         ep.path?.toLowerCase().includes(q) ||
-                        t(ep.description)?.toLowerCase().includes(q) ||
+                        (t(ep.description) || ep.description || '')?.toLowerCase().includes(q) ||
                         ep.method?.toLowerCase().includes(q)
                       );
                     });
@@ -1089,8 +1216,8 @@ export default function PermissionsTab({ partners, setPartners, accounts, initia
             ) : (
               <div className="text-center py-24 bg-white rounded-2xl border border-slate-200 border-dashed text-slate-400">
                 <div className="text-5xl mb-4 font-mono">🛡️</div>
-                <h4 className="font-bold text-slate-700 text-sm">Chưa chọn nhóm quyền</h4>
-                <p className="text-xs text-slate-400 mt-1">Chọn một nhóm quyền ở cột bên trái để tiến hành cấu hình quyền gọi API</p>
+                <h4 className="font-bold text-slate-700 text-sm">{t('permissions.no_profile_selected', 'Chưa chọn nhóm quyền')}</h4>
+                <p className="text-xs text-slate-400 mt-1">{t('permissions.no_profile_selected_desc', 'Chọn một nhóm quyền ở cột bên trái để tiến hành cấu hình quyền gọi API')}</p>
               </div>
             )}
           </div>
@@ -1108,10 +1235,10 @@ export default function PermissionsTab({ partners, setPartners, accounts, initia
             <table className="w-full border-collapse text-sm">
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold text-[10px] uppercase">
-                  <th className="p-4 text-left">Mã đối tác</th>
-                  <th className="p-4 text-left">Tên Đối Tác</th>
-                  <th className="p-4 text-left">Tài khoản liên kết</th>
-                  <th className="p-4 text-left w-64">Nhóm quyền tích hợp (có thể chọn nhiều)</th>
+                  <th className="p-4 text-left">{t('partners.code', 'Mã đối tác')}</th>
+                  <th className="p-4 text-left">{t('partners.name', 'Tên Đối Tác')}</th>
+                  <th className="p-4 text-left">{t('partners.linked_account', 'Tài khoản liên kết')}</th>
+                  <th className="p-4 text-left w-64">{t('permissions.partner_profile_header', 'Nhóm quyền tích hợp (có thể chọn nhiều)')}</th>
                   <th className="p-4 text-center w-8"></th>
                 </tr>
               </thead>
@@ -1140,7 +1267,7 @@ export default function PermissionsTab({ partners, setPartners, accounts, initia
                             {account.email}
                           </span>
                         ) : (
-                          <span className="text-slate-400 text-xs italic">Chưa liên kết</span>
+                          <span className="text-slate-400 text-xs italic">{t('partners.not_linked', 'Chưa liên kết')}</span>
                         )}
                       </td>
                       <td className="p-4" onClick={e => e.stopPropagation()}>
@@ -1169,7 +1296,7 @@ export default function PermissionsTab({ partners, setPartners, accounts, initia
                             <div className="relative">
                               <input
                                 type="text"
-                                placeholder="🔍 Tìm API..."
+                                placeholder={t('permissions.search_partner_api', '🔍 Tìm API...')}
                                 value={partnerApiSearch}
                                 onChange={e => setPartnerApiSearch(e.target.value)}
                                 className="w-full border border-slate-200/70 bg-white/80 rounded-lg px-3 py-1.5 pl-7 text-[11px] outline-none focus:border-blue-300 transition-all"
@@ -1187,7 +1314,7 @@ export default function PermissionsTab({ partners, setPartners, accounts, initia
                             </div>
 
                             {allEndpoints.length === 0 ? (
-                              <div className="text-center py-3 text-[11px] text-slate-400 italic">Chưa có API nào</div>
+                              <div className="text-center py-3 text-[11px] text-slate-400 italic">{t('permissions.no_apis_available', 'Chưa có API nào')}</div>
                             ) : (
                               <div className="space-y-2 max-h-[300px] overflow-y-auto">
                                 {groupByCategory(allEndpoints).map(({ category: cat, apis }) => {
@@ -1195,7 +1322,8 @@ export default function PermissionsTab({ partners, setPartners, accounts, initia
                                   const filteredApis = apis.filter(ep => {
                                     if (!partnerApiSearch) return true;
                                     const q = partnerApiSearch.toLowerCase();
-                                    return ep.path?.toLowerCase().includes(q) || t(ep.description)?.toLowerCase().includes(q) || ep.method?.toLowerCase().includes(q);
+                                    const desc = t(ep.description) || ep.description || '';
+                                    return ep.path?.toLowerCase().includes(q) || desc.toLowerCase().includes(q) || ep.method?.toLowerCase().includes(q);
                                   });
                                   if (filteredApis.length === 0) return null;
                                   const visibleAllowed = filteredApis.filter(ep => allowedIds.includes(ep.id)).length;
@@ -1219,19 +1347,19 @@ export default function PermissionsTab({ partners, setPartners, accounts, initia
                                               type="button"
                                               onClick={() => handlePartnerApiToggleCategoryAll(p.id, cat, 'deny')}
                                               className="text-[8px] font-semibold px-2 py-0.5 rounded border text-rose-500 border-rose-200 bg-rose-50/50 hover:bg-rose-50 transition-all"
-                                            >Bỏ hết</button>
-                                          )}
-                                          <button
-                                            type="button"
-                                            onClick={() => handlePartnerApiToggleCategoryAll(p.id, cat, isAllSelected ? 'deny' : 'allow')}
-                                            className={`text-[8px] font-semibold px-2 py-0.5 rounded border transition-all ${
-                                              isAllSelected
-                                                ? 'text-rose-500 border-rose-200 bg-rose-50/50 hover:bg-rose-50'
-                                                : 'text-blue-500 border-blue-200 bg-blue-50/50 hover:bg-blue-50'
-                                            }`}
-                                          >
-                                            {isAllSelected ? 'Bỏ hết' : isNoneSelected ? 'Chọn hết' : 'Chọn hết'}
-                                          </button>
+                                             >{t('permissions.deselect_all', 'Bỏ hết')}</button>
+                                           )}
+                                           <button
+                                             type="button"
+                                             onClick={() => handlePartnerApiToggleCategoryAll(p.id, cat, isAllSelected ? 'deny' : 'allow')}
+                                             className={`text-[8px] font-semibold px-2 py-0.5 rounded border transition-all ${
+                                               isAllSelected
+                                                 ? 'text-rose-500 border-rose-200 bg-rose-50/50 hover:bg-rose-50'
+                                                 : 'text-blue-500 border-blue-200 bg-blue-50/50 hover:bg-blue-50'
+                                             }`}
+                                           >
+                                             {isAllSelected ? t('permissions.deselect_all', 'Bỏ hết') : isNoneSelected ? t('permissions.select_all', 'Chọn hết') : t('permissions.select_all', 'Chọn hết')}
+                                           </button>
                                         </div>
                                       </div>
                                       {isPartnerCatExpanded && (
@@ -1273,63 +1401,62 @@ export default function PermissionsTab({ partners, setPartners, accounts, initia
                         </td>
                       </tr>
                     )}
-                    </React.Fragment>
+                        </React.Fragment>
                   );
                 })}
               </tbody>
             </table>
           </div>
         </div>
+        </>
+      )}
 
-        {/* Collapsible preview — API từ file upload */}
-        {previewEndpoints.length > 0 && (
-          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
-            <div
-              onClick={() => setPreviewExpanded(v => !v)}
-              className="flex items-center justify-between p-4 cursor-pointer select-none hover:bg-slate-50/50 transition-colors"
-            >
+      {/* Modal preview — API từ file upload */}
+      {previewEndpoints.length > 0 && (
+        <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[80vh] flex flex-col overflow-hidden">
+            <div className="p-5 border-b border-slate-100 flex items-center justify-between shrink-0">
               <div className="flex items-center gap-2">
-                <span className={`text-slate-400 text-xs transition-transform ${previewExpanded ? 'rotate-90' : ''}`}>▶</span>
-                <span className="font-bold text-slate-700 text-sm">📂 API từ file upload</span>
-                <span className="text-[10px] font-bold bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded-full">{previewEndpoints.length}</span>
+                <span className="font-bold text-slate-800">{t('permissions.uploaded_apis', '📂 API từ file upload')}</span>
+                <span className="text-[10px] font-bold bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded-full">{previewEndpoints.length} API</span>
                 <span className="text-xs text-slate-400 font-medium">{previewFileName}</span>
               </div>
-              <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
+              <div className="flex items-center gap-2">
                 <button
-                  onClick={() => { handleCreateProfileFromPreview(); setPreviewExpanded(true); }}
+                  onClick={() => { handleCreateProfileFromPreview(); }}
                   className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white font-medium text-xs py-1.5 px-3 rounded-lg transition-all cursor-pointer border-0"
                 >
-                  ➕ Tạo nhóm quyền
+                  {t('permissions.create_profile', '➕ Tạo nhóm quyền')}
                 </button>
+                <button
+                  onClick={() => { setPreviewEndpoints([]); setPreviewFileName(''); }}
+                  className="text-slate-400 hover:text-slate-600 bg-transparent border-0 cursor-pointer text-lg"
+                >✕</button>
               </div>
             </div>
-
-            {previewExpanded && (
-              <div className="border-t border-slate-100 p-4 space-y-3 max-h-[400px] overflow-y-auto">
-                {groupByCategory(previewEndpoints).map(({ category: cat, apis }) => (
-                  <div key={cat} className="border border-slate-100 rounded-xl overflow-hidden shadow-sm">
-                    <div className="flex items-center justify-between p-3 bg-slate-50/50">
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold text-slate-700 text-xs uppercase tracking-wider">{t(cat)}</span>
-                        <span className="text-[10px] font-bold bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded-full">{apis.length}</span>
-                      </div>
-                    </div>
-                    <div className="divide-y divide-slate-100 bg-white">
-                      {apis.map(ep => (
-                        <div key={ep.id} className="p-3 flex items-center gap-4 hover:bg-slate-50/30">
-                          <span className={`text-[8px] px-1.5 py-0.5 rounded font-black text-white shrink-0 ${methodBadgeClass(ep.method)}`}>{ep.method}</span>
-                          <span className="font-mono text-[11px] text-slate-700 truncate font-semibold min-w-0 flex-1">{ep.path}</span>
-                          <span className="text-xs text-slate-500">{t(ep.description)}</span>
-                        </div>
-                      ))}
+            <div className="p-4 space-y-3 overflow-y-auto">
+              {groupByCategory(previewEndpoints).map(({ category: cat, apis }) => (
+                <div key={cat} className="border border-slate-100 rounded-xl overflow-hidden shadow-sm">
+                  <div className="flex items-center justify-between p-3 bg-slate-50/50">
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-slate-700 text-xs uppercase tracking-wider">{t(cat)}</span>
+                      <span className="text-[10px] font-bold bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded-full">{apis.length}</span>
                     </div>
                   </div>
-                ))}
-              </div>
-            )}
+                  <div className="divide-y divide-slate-100 bg-white">
+                    {apis.map(ep => (
+                      <div key={ep.id} className="p-3 flex items-center gap-4 hover:bg-slate-50/30">
+                        <span className={`text-[8px] px-1.5 py-0.5 rounded font-black text-white shrink-0 ${methodBadgeClass(ep.method)}`}>{ep.method}</span>
+                        <span className="font-mono text-[11px] text-slate-700 truncate font-semibold min-w-0 flex-1">{ep.path}</span>
+                        <span className="text-xs text-slate-500">{t(ep.description)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
-        )}
-        </>
+        </div>
       )}
 
       {/* Modal Profile */}

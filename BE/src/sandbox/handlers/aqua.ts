@@ -1,9 +1,12 @@
-export const aquaHandlers: Record<string, (body: any) => any> = {
+export const aquaHandlers: Record<
+  string,
+  (body?: Record<string, unknown>) => unknown
+> = {
   'api-aqua-fee-quote': () => ({
     status: 'success',
     data: { totalFee: 400000, status: '200' },
   }),
-  'api-aqua-create-policy': (body: any) => ({
+  'api-aqua-create-policy': (body?: Record<string, unknown>) => ({
     status: 'success',
     data: {
       partnerTransactionId: body?.partnerTransactionId || 'Test07',
@@ -14,7 +17,7 @@ export const aquaHandlers: Record<string, (body: any) => any> = {
       message: 'Thanh cong',
     },
   }),
-  'api-aqua-query-policy': (body: any) => ({
+  'api-aqua-query-policy': (body?: Record<string, unknown>) => ({
     status: 'success',
     data: {
       partnerTransactionId: body?.partnerTransactionId || 'Test07',

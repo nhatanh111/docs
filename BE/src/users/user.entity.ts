@@ -6,17 +6,17 @@ export class User extends Model {
   declare id: number;
 
   @Column({ allowNull: false, unique: true })
-  email: string;
+  declare email: string;
 
   @Column({ allowNull: false })
-  password: string;
+  declare password: string;
 
   @Column({ defaultValue: 'ĐỐI TÁC' })
-  role: string;
+  declare role: string;
 
   @Column({ defaultValue: 'Active' })
-  status: string;
+  declare status: string;
 
   @Column({ type: DataType.TEXT, allowNull: true })
-  description: string;
+  declare description: string;
 }

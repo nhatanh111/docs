@@ -16,8 +16,10 @@ export default function App() {
   const menuRef = useRef(null);
 
   useEffect(() => {
-    const savedUser = localStorage.getItem('user_info');
-    if (savedUser) setUser(JSON.parse(savedUser));
+    try {
+      const savedUser = localStorage.getItem('user_info');
+      if (savedUser) setUser(JSON.parse(savedUser));
+    } catch {};
 
     const handleClickOutside = (event) => {
       if (menuRef.current && !menuRef.current.contains(event.target)) {
@@ -45,7 +47,7 @@ export default function App() {
 
   const handleLogout = () => {
     setUser(null);
-    localStorage.clear();
+    ['token', 'user_info', 'i18nextLng'].forEach(k => localStorage.removeItem(k));
     setViewMode('portal');
     setShowUserMenu(false);
   };

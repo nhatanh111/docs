@@ -1,12 +1,97 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   addAccount as addAccountService,
   updateAccount as updateAccountService,
-  deleteAccount as deleteAccountService
+  deleteAccount as deleteAccountService,
+  verifyAccountPassword
 } from './services/localStorageService';
 
-function AccountModal({ isOpen, mode, currentAccount, setCurrentAccount, onSave, onClose, t }) {
+function AccountModal({ isOpen, mode, currentAccount, originalEmail, setCurrentAccount, onSave, onClose, t }) {
+  const [oldPassword, setOldPassword] = useState('');
+  const [verifying, setVerifying] = useState(false);
+  const [oldVerified, setOldVerified] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [verifyError, setVerifyError] = useState('');
+  const verifyTimerRef = useRef(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      setOldPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+      setOldVerified(false);
+      setVerifyError('');
+      setVerifying(false);
+    }
+    return () => { if (verifyTimerRef.current) clearTimeout(verifyTimerRef.current); };
+  }, [isOpen]);
+
+  const runVerify = async (value) => {
+    setVerifying(true);
+    setVerifyError('');
+    let ok = false;
+    try {
+      const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const res = await fetch(`${API_BASE}/api/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: originalEmail, password: value }),
+      });
+      if (res.ok) {
+        ok = true;
+      } else if (res.status === 401) {
+        setVerifyError(t('accounts.wrong_old_password'));
+        setVerifying(false);
+        return;
+      }
+    } catch (e) {}
+    if (!ok) {
+      const account = await verifyAccountPassword(originalEmail, value);
+      ok = !!account;
+      if (!ok) setVerifyError(t('accounts.wrong_old_password'));
+    }
+    if (ok) {
+      setOldVerified(true);
+      setVerifyError('');
+    }
+    setVerifying(false);
+  };
+
+  const handleOldPasswordChange = (e) => {
+    const value = e.target.value;
+    setOldPassword(value);
+    setVerifyError('');
+    if (oldVerified) setOldVerified(false);
+    if (verifyTimerRef.current) clearTimeout(verifyTimerRef.current);
+    if (!value) return;
+    verifyTimerRef.current = setTimeout(() => runVerify(value), 500);
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (mode === 'edit') {
+      if (oldVerified) {
+        if (!newPassword) {
+          setVerifyError(t('accounts.new_password_required'));
+          return;
+        }
+        if (newPassword !== confirmPassword) {
+          setVerifyError(t('accounts.password_mismatch'));
+          return;
+        }
+        onSave(e, newPassword);
+        return;
+      }
+      if (oldPassword) {
+        setVerifyError(t('accounts.enter_old_password_first'));
+        return;
+      }
+    }
+    onSave(e);
+  };
+
   if (!isOpen) return null;
   return (
     <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50 p-4">
@@ -14,11 +99,11 @@ function AccountModal({ isOpen, mode, currentAccount, setCurrentAccount, onSave,
         <div className="p-5 border-b border-slate-100 flex justify-between items-center">
           <div>
             <h3 className="font-bold text-slate-800">{mode === 'add' ? t('accounts.add') : t('accounts.edit')}</h3>
-            <p className="text-slate-400 text-xs">{mode === 'add' ? 'Tạo tài khoản mới cho đối tác' : 'Chỉnh sửa thông tin tài khoản'}</p>
+            <p className="text-slate-400 text-xs">{mode === 'add' ? t('accounts.add_subtitle') : t('accounts.edit_subtitle')}</p>
           </div>
           <button onClick={onClose} className="text-slate-400 hover:text-slate-600 bg-transparent border-0 cursor-pointer text-lg">✕</button>
         </div>
-        <form onSubmit={onSave} className="p-5 space-y-4">
+        <form onSubmit={handleSubmit} className="p-5 space-y-4">
           <div>
             <label className="text-[10px] font-bold text-slate-500 uppercase block mb-1">{t('accounts.email')} *</label>
             <input
@@ -28,24 +113,71 @@ function AccountModal({ isOpen, mode, currentAccount, setCurrentAccount, onSave,
                 className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3.5 py-2 text-sm font-mono outline-none focus:border-blue-400"
             />
           </div>
-          <div>
-            <label className="text-[10px] font-bold text-slate-500 uppercase block mb-1">
-              {t('accounts.password')} {mode === 'add' ? '*' : '(có thể chỉnh sửa)'}
-            </label>
-            <input
-              type="text"
-              required={mode === 'add'}
-              placeholder={mode === 'add' ? t('accounts.password_placeholder') : 'Nhập mật khẩu mới nếu muốn thay đổi'}
-              value={currentAccount.password || ''}
-              onChange={(e) => setCurrentAccount({ ...currentAccount, password: e.target.value })}
-              className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3.5 py-2 text-sm font-mono outline-none focus:border-blue-400"
-            />
-            {mode === 'add' && (
+          {mode === 'add' ? (
+            <div>
+              <label className="text-[10px] font-bold text-slate-500 uppercase block mb-1">
+                {t('accounts.password')} *
+              </label>
+              <input
+                type="password"
+                required
+                placeholder={t('accounts.password_placeholder')}
+                value={currentAccount.password || ''}
+                onChange={(e) => setCurrentAccount({ ...currentAccount, password: e.target.value })}
+                className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3.5 py-2 text-sm font-mono outline-none focus:border-blue-400"
+              />
               <p className="text-[9px] text-blue-600 mt-1 font-medium">
-                💡 Mật khẩu này sẽ được dùng để đăng nhập hệ thống
+                {t('accounts.password_hint')}
               </p>
-            )}
-          </div>
+            </div>
+          ) : (
+            <div>
+              <label className="text-[10px] font-bold text-slate-500 uppercase block mb-1">{t('accounts.old_password')}</label>
+              <div className="relative">
+                <input
+                  type="password"
+                  value={oldPassword}
+                  onChange={handleOldPasswordChange}
+                  placeholder={t('accounts.old_password_placeholder')}
+                  className={`w-full bg-slate-50 border rounded-lg px-3.5 py-2 text-sm font-mono outline-none focus:border-blue-400 pr-16 ${oldVerified ? 'border-emerald-300 bg-emerald-50/50' : 'border-slate-200'}`}
+                />
+                {verifying && (
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-semibold text-slate-400 animate-pulse">⏳ {t('accounts.verifying')}</span>
+                )}
+                {oldVerified && (
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm font-bold text-emerald-600">✓</span>
+                )}
+              </div>
+              {verifyError && <p className="text-[11px] text-rose-600 mt-1 font-semibold">❌ {verifyError}</p>}
+            </div>
+          )}
+          {mode === 'edit' && oldVerified && (
+            <div className="border border-emerald-200 bg-emerald-50/50 rounded-lg p-3 space-y-3">
+              <div>
+                <label className="text-[10px] font-bold text-slate-500 uppercase block mb-1">{t('accounts.new_password')} *</label>
+                <input
+                  type="password"
+                  required
+                  value={newPassword}
+                  onChange={(e) => { setNewPassword(e.target.value); setVerifyError(''); }}
+                  placeholder={t('accounts.password_placeholder')}
+                  className="w-full bg-white border border-emerald-200 rounded-lg px-3.5 py-2 text-sm font-mono outline-none focus:border-emerald-400"
+                />
+              </div>
+              <div>
+                <label className="text-[10px] font-bold text-slate-500 uppercase block mb-1">{t('accounts.confirm_password')} *</label>
+                <input
+                  type="password"
+                  required
+                  value={confirmPassword}
+                  onChange={(e) => { setConfirmPassword(e.target.value); setVerifyError(''); }}
+                  placeholder={t('accounts.confirm_password')}
+                  className="w-full bg-white border border-emerald-200 rounded-lg px-3.5 py-2 text-sm font-mono outline-none focus:border-emerald-400"
+                />
+              </div>
+              {verifyError && <p className="text-[11px] text-rose-600 font-semibold">❌ {verifyError}</p>}
+            </div>
+          )}
           <div>
             <label className="text-[10px] font-bold text-slate-500 uppercase block mb-1">{t('accounts.role')} *</label>
             <select
@@ -109,30 +241,28 @@ export default function AccountsTab({ accounts, setAccounts }) {
     setIsModalOpen(true);
   };
 
-  const saveAccount = async (e) => {
+  const saveAccount = async (e, newPassword) => {
     e.preventDefault();
     try {
       if (modalMode === 'add') {
         if (accounts.find(a => a.email.toLowerCase() === currentAccount.email.toLowerCase())) {
-          alert('❌ Email này đã tồn tại trong hệ thống!');
+          alert(t('accounts.email_exists'));
           return;
         }
         const newAccount = await addAccountService(currentAccount);
         setAccounts(prev => [...prev, newAccount]);
-        alert(`✅ Tài khoản "${newAccount.email}" đã được tạo!\n📧 Email: ${newAccount.email}\n🔑 Mật khẩu: ${currentAccount.password}`);
+        alert(t('accounts.created_success', { email: newAccount.email }));
       } else {
         const dataToUpdate = { ...currentAccount };
-        if (!dataToUpdate.password) {
-          const existingAcc = accounts.find(a => a.id === currentAccount.id);
-          dataToUpdate.password = existingAcc?.password || '';
-        }
+        if (newPassword) dataToUpdate.password = newPassword;
+        else delete dataToUpdate.password;
         const updated = await updateAccountService(currentAccount.id, dataToUpdate);
         setAccounts(prev => prev.map(a => a.id === updated.id ? updated : a));
         alert(t('accounts.updated_success'));
       }
       setIsModalOpen(false);
     } catch (error) {
-      alert(t('accounts.delete_error') + ' ' + error.message);
+      alert(t('accounts.save_error') + ' ' + error.message);
     }
   };
 
@@ -214,6 +344,7 @@ export default function AccountsTab({ accounts, setAccounts }) {
         isOpen={isModalOpen}
         mode={modalMode}
         currentAccount={currentAccount}
+        originalEmail={accounts.find(a => a.id === currentAccount.id)?.email || currentAccount.email}
         setCurrentAccount={setCurrentAccount}
         onSave={saveAccount}
         onClose={() => setIsModalOpen(false)}

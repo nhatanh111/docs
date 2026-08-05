@@ -16,7 +16,9 @@ export default function DocsMainContent({ middleScrollRef, activeEndpoints, apiR
             </span>
             <h1 className="text-xl font-extrabold text-slate-900 tracking-tight mt-1.5 max-w-full">{t(ep.description)}</h1>
             <div className="mt-3 flex items-center space-x-2 text-xs max-w-full">
-              <span className={`text-white font-black px-2.5 py-1 rounded-md shrink-0 ${ep.method === 'POST' ? 'bg-emerald-600' : 'bg-blue-600'}`}>{ep.method}</span>
+              <span className={`text-white font-black px-2.5 py-1 rounded-md shrink-0 ${
+                {POST: 'bg-emerald-600', PUT: 'bg-amber-600', PATCH: 'bg-orange-500', GET: 'bg-blue-500', DELETE: 'bg-red-500', INFO: 'bg-blue-500', DATA: 'bg-blue-500'}[ep.method] || 'bg-slate-500'
+              }`}>{ep.method}</span>
               <code className="bg-slate-50 text-slate-700 px-3 py-1 rounded-xl font-mono border border-slate-200/70 break-all flex-1 font-bold text-left">{ep.path}</code>
             </div>
           </div>
@@ -31,14 +33,14 @@ export default function DocsMainContent({ middleScrollRef, activeEndpoints, apiR
                 <h2 className="text-sm font-extrabold text-slate-900 uppercase tracking-wide">{t('portal.labels.request_body')}</h2>
                 <div className="inline-block bg-orange-50 text-orange-600 text-[9px] font-bold px-2 py-0.5 rounded border border-orange-200 uppercase">application/json</div>
                 <div className="pl-2 border-l border-slate-200 space-y-1 pt-1 max-w-full overflow-hidden">
-                  {ep.requestSample ? <TreeSchema dataObj={ep.requestSample} /> : <p className="text-xs text-slate-400 italic">Không yêu cầu Body Header Parameter.</p>}
+                  {ep.requestSample ? <TreeSchema dataObj={ep.requestSample} /> : <p className="text-xs text-slate-400 italic">{t('portal.labels.no_params')}</p>}
                 </div>
               </div>
               <div className="mt-8 space-y-4 text-left max-w-full">
                 <h2 className="text-sm font-extrabold text-slate-900 uppercase tracking-wide">{t('portal.labels.response_format')}</h2>
                 <div className="inline-block bg-orange-50 text-orange-600 text-[9px] font-bold px-2 py-0.5 rounded border border-orange-200 uppercase">application/json</div>
                 <div className="pl-2 border-l border-slate-200 space-y-1 pt-1 max-w-full overflow-hidden">
-                  {ep.responseFormat ? <TreeSchema dataObj={ep.responseFormat} /> : <p className="text-xs text-slate-400 italic">Không có phản hồi mẫu.</p>}
+                  {ep.responseFormat ? <TreeSchema dataObj={ep.responseFormat} /> : <p className="text-xs text-slate-400 italic">{t('portal.labels.no_response')}</p>}
                 </div>
               </div>
             </>
