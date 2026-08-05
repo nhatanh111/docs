@@ -35,7 +35,10 @@ export class DocumentsService {
     @InjectModel(ApiEndpoint) private endpointModel: typeof ApiEndpoint,
   ) {}
 
-  async getDocuments(user?: { role?: string; partnerId?: string }): Promise<Project[]> {
+  async getDocuments(user?: {
+    role?: string;
+    partnerId?: string;
+  }): Promise<Project[]> {
     const [docs, endpoints] = await Promise.all([
       this.docModel.findAll({ order: [['projectId', 'ASC']] }),
       this.endpointModel.findAll(),
@@ -113,12 +116,13 @@ export class DocumentsService {
     );
 
     await Promise.all(
-      docs.map((doc) =>
-        doc.update({ allowedPartners: next } as any),
-      ),
+      docs.map((doc) => doc.update({ allowedPartners: next } as any)),
     );
 
-    return { success: true, projects: await this.getDocuments({ role: 'ADMIN' }) };
+    return {
+      success: true,
+      projects: await this.getDocuments({ role: 'ADMIN' }),
+    };
   }
 
   async setEndpointPermission(
@@ -135,9 +139,12 @@ export class DocumentsService {
       hasPermission,
     );
 
-    await ep.update({ allowedPartners: next } as any);
+    await ep.update({ allowedPartners: next });
 
-    return { success: true, projects: await this.getDocuments({ role: 'ADMIN' }) };
+    return {
+      success: true,
+      projects: await this.getDocuments({ role: 'ADMIN' }),
+    };
   }
 
   private applyPartnerToArray(
@@ -156,7 +163,7 @@ export class DocumentsService {
 
   async uploadEndpoints(endpoints: unknown[]) {
     const uploadedProjectId = 'project-uploaded';
-    let uploadedDocs = await this.docModel.findAll({
+    const uploadedDocs = await this.docModel.findAll({
       where: { projectId: uploadedProjectId },
     });
 
@@ -224,9 +231,9 @@ export class DocumentsService {
       }
 
       const existingIds = new Set(
-        (await this.endpointModel.findAll({ where: { documentId: docId } })).map(
-          (e) => e.endpointId,
-        ),
+        (
+          await this.endpointModel.findAll({ where: { documentId: docId } })
+        ).map((e) => e.endpointId),
       );
       const newEps = eps.filter((e) => !existingIds.has(e.endpointId));
       for (const newEp of newEps) {

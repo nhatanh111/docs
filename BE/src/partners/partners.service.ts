@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Partner } from './partner.entity';
 
@@ -8,7 +12,7 @@ export class PartnersService {
 
   async findAll() {
     const partners = await this.partnerModel.findAll();
-    return partners.map(p => ({
+    return partners.map((p) => ({
       ...p.toJSON(),
       profileIds: (p as any).profileIds || [],
       allowedApis: (p as any).allowedApis || [],
@@ -92,13 +96,17 @@ export class PartnersService {
 
     partner.name = body.name !== undefined ? body.name : partner.name;
     partner.email = body.email !== undefined ? body.email : partner.email;
-    partner.clientId = body.clientId !== undefined ? body.clientId : partner.clientId;
+    partner.clientId =
+      body.clientId !== undefined ? body.clientId : partner.clientId;
     partner.status = body.status !== undefined ? body.status : partner.status;
     partner.accountId =
       body.accountId !== undefined ? body.accountId : partner.accountId;
-    if (body.profileIds !== undefined) (partner as any).profileIds = body.profileIds;
-    if (body.allowedApis !== undefined) (partner as any).allowedApis = body.allowedApis;
-    if (body.overrides !== undefined) (partner as any).overrides = body.overrides;
+    if (body.profileIds !== undefined)
+      (partner as any).profileIds = body.profileIds;
+    if (body.allowedApis !== undefined)
+      (partner as any).allowedApis = body.allowedApis;
+    if (body.overrides !== undefined)
+      (partner as any).overrides = body.overrides;
     await partner.save();
 
     return {
@@ -114,7 +122,9 @@ export class PartnersService {
     if (!partner) throw new NotFoundException('Không tìm thấy đối tác');
 
     if (partner.accountId) {
-      throw new BadRequestException('Không thể xóa đối tác đã liên kết với tài khoản. Vui lòng hủy liên kết trước.');
+      throw new BadRequestException(
+        'Không thể xóa đối tác đã liên kết với tài khoản. Vui lòng hủy liên kết trước.',
+      );
     }
 
     await partner.destroy();

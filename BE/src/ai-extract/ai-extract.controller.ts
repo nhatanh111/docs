@@ -68,7 +68,9 @@ export class AiExtractController {
         !buf &&
         ['.docx', '.pdf', '.txt', '.json', '.yaml', '.yml'].indexOf(ext) === -1
       ) {
-        throw new BadRequestException('Không thể đọc file hoặc file không có nội dung');
+        throw new BadRequestException(
+          'Không thể đọc file hoặc file không có nội dung',
+        );
       }
 
       if (ext === '.docx') {
@@ -84,7 +86,9 @@ export class AiExtractController {
         const pdfParse =
           (pdfModule as { default?: unknown }).default ?? pdfModule;
         if (typeof pdfParse !== 'function') {
-          throw new BadRequestException('pdf-parse module does not export a function');
+          throw new BadRequestException(
+            'pdf-parse module does not export a function',
+          );
         }
         const pdfResult = await (pdfParse as (b: Buffer) => Promise<unknown>)(
           buf as Buffer,
@@ -108,7 +112,9 @@ export class AiExtractController {
       }
 
       if (!text || text.trim().length === 0) {
-        throw new BadRequestException('Cannot read content from file (empty or protected).');
+        throw new BadRequestException(
+          'Cannot read content from file (empty or protected).',
+        );
       }
 
       this.logger.log(`Extracted ${text.length} chars from ${originalName}`);

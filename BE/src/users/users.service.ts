@@ -122,8 +122,13 @@ export class UsersService {
       throw new BadRequestException('Không thể xóa admin cuối cùng');
     }
 
-    const linkedPartner = await this.partnerModel.findOne({ where: { accountId: id } });
-    if (linkedPartner) throw new BadRequestException('Không thể xóa tài khoản đang liên kết với đối tác. Vui lòng hủy liên kết trước.');
+    const linkedPartner = await this.partnerModel.findOne({
+      where: { accountId: id },
+    });
+    if (linkedPartner)
+      throw new BadRequestException(
+        'Không thể xóa tài khoản đang liên kết với đối tác. Vui lòng hủy liên kết trước.',
+      );
 
     await user.destroy();
     return { message: 'Xóa thành công' };

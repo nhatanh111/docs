@@ -20,7 +20,12 @@ export class AiExtractService {
 
     const truncated = text.slice(0, 50000);
     const provider = this.config.get<string>('XAI_PROVIDER') || 'xai';
-    const providerName = provider === 'google' ? 'Google' : provider === 'deepseek' ? 'DeepSeek' : 'xAI';
+    const providerName =
+      provider === 'google'
+        ? 'Google'
+        : provider === 'deepseek'
+          ? 'DeepSeek'
+          : 'xAI';
 
     let response: Response;
     if (provider === 'deepseek') {
@@ -34,7 +39,10 @@ export class AiExtractService {
           model: 'deepseek-chat',
           messages: [
             { role: 'system', content: SYSTEM_PROMPT },
-            { role: 'user', content: `Please extract the API list from the following document:\n\n${truncated}` },
+            {
+              role: 'user',
+              content: `Please extract the API list from the following document:\n\n${truncated}`,
+            },
           ],
           temperature: 0.1,
           max_tokens: 8000,
@@ -49,7 +57,9 @@ export class AiExtractService {
           {
             parts: [
               { text: SYSTEM_PROMPT },
-              { text: `Please extract the API list from the following document:\n\n${truncated}` },
+              {
+                text: `Please extract the API list from the following document:\n\n${truncated}`,
+              },
             ],
           },
         ],
@@ -77,7 +87,10 @@ export class AiExtractService {
           model: 'grok-2-latest',
           messages: [
             { role: 'system', content: SYSTEM_PROMPT },
-            { role: 'user', content: `Please extract the API list from the following document:\n\n${truncated}` },
+            {
+              role: 'user',
+              content: `Please extract the API list from the following document:\n\n${truncated}`,
+            },
           ],
           temperature: 0.1,
           max_tokens: 8000,
@@ -103,7 +116,8 @@ export class AiExtractService {
         obj.choices[0] !== null
       ) {
         const choiceObj = obj.choices[0] as Record<string, unknown>;
-        const messageObj = choiceObj.message as Record<string, unknown> | undefined;
+        const messageObj = choiceObj.message as
+          Record<string, unknown> | undefined;
         if (messageObj && typeof messageObj.content === 'string') {
           content = messageObj.content;
         }
@@ -123,9 +137,12 @@ export class AiExtractService {
         obj.candidates[0] !== null
       ) {
         const candidate = obj.candidates[0] as Record<string, unknown>;
-        const cContent = candidate.content as Record<string, unknown> | undefined;
+        const cContent = candidate.content as
+          Record<string, unknown> | undefined;
         if (cContent && Array.isArray(cContent.parts)) {
-          content = cContent.parts.map((p: Record<string, unknown>) => p.text || '').join('');
+          content = cContent.parts
+            .map((p: Record<string, unknown>) => p.text || '')
+            .join('');
         }
       }
 
@@ -137,7 +154,10 @@ export class AiExtractService {
       ) {
         const responseObj = obj.responses[0] as Record<string, unknown>;
         if (Array.isArray(responseObj.candidates)) {
-          const candidate = responseObj.candidates[0] as Record<string, unknown>;
+          const candidate = responseObj.candidates[0] as Record<
+            string,
+            unknown
+          >;
           if (typeof candidate?.content === 'string') {
             content = candidate.content;
           }
@@ -151,7 +171,8 @@ export class AiExtractService {
       ) {
         const outputObj = obj.output[0] as Record<string, unknown>;
         if (Array.isArray(outputObj.content)) {
-          const outputItem = outputObj.content[0] as Record<string, unknown> | undefined;
+          const outputItem = outputObj.content[0] as
+            Record<string, unknown> | undefined;
           if (outputItem && typeof outputItem.text === 'string') {
             content = outputItem.text;
           }
@@ -182,4 +203,3 @@ export class AiExtractService {
     return parsed;
   }
 }
-
