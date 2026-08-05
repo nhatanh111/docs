@@ -3,5 +3,6 @@ dist
 .env
 *.local
 AGENTS.md
+.opencode/
 TEST_PLAN*.md
 sample-api-upload.*
