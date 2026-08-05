@@ -28,7 +28,7 @@ const SEED_PROJECTS = [
             name: 'Khởi tạo Access Token (OAuth2 Client Credentials)',
             allowedPartners: ['pt-vifo', 'pt-momo'],
             requestSample: {
-              client_id: 'PARTNER_ANBIEN_ID',
+              client_id: 'partner',
               client_secret: 'pvi_secret_key_abc123',
               grant_type: 'client_credentials',
             },
@@ -52,7 +52,7 @@ const SEED_PROJECTS = [
             name: 'Tính toán tổng phí bảo hiểm bắt buộc & tự nguyện xe máy',
             allowedPartners: ['pt-vifo', 'pt-momo'],
             requestSample: {
-              CpId: 'PARTNER_ANBIEN_2026',
+              CpId: 'partner',
               Sign: '7ac110780f2d5902',
               loai_xe: 'MOTO_01',
               muc_trachnhiem_laiphu: 20000000,
@@ -71,7 +71,7 @@ const SEED_PROJECTS = [
             name: 'Đăng ký thông tin cấp ấn chỉ bảo hiểm Xe Máy',
             allowedPartners: ['pt-vifo'],
             requestSample: {
-              CpId: 'PARTNER_ANBIEN_2026',
+              CpId: 'partner',
               Sign: 'b2c3d4e5f6g7h8i9',
               ten_nguoimua_bh: 'Trần Thị B',
               so_dienthoai: '0912345678',
@@ -98,7 +98,7 @@ const SEED_PROJECTS = [
             name: 'Tính phí bảo hiểm trách nhiệm dân sự bắt buộc xe ô tô',
             allowedPartners: ['pt-vifo', 'pt-momo'],
             requestSample: {
-              CpId: 'PARTNER_ANBIEN_2026',
+              CpId: 'partner',
               Sign: '41d8e12a0f2d5902',
               ma_loaixe: 'X01',
               so_cho: 5,
@@ -124,7 +124,7 @@ const SEED_PROJECTS = [
             name: 'Đẩy dữ liệu thông tin chủ xe, số khung số máy cấp đơn ô tô',
             allowedPartners: ['pt-vifo', 'pt-momo'],
             requestSample: {
-              CpId: 'PARTNER_ANBIEN_2026',
+              CpId: 'partner',
               Sign: 'a1b2c3d4e5f6g7h8',
               TenKH: 'Nguyễn Văn A',
               DienThoai: '0901234567',
@@ -157,7 +157,7 @@ const SEED_PROJECTS = [
             name: 'Khai báo tổn thất, gửi yêu cầu duyệt bồi thường trực tuyến',
             allowedPartners: ['pt-vifo', 'pt-momo'],
             requestSample: {
-              CpId: 'PARTNER_ANBIEN_2026',
+              CpId: 'partner',
               Sign: '5ab100780f2d5902',
               so_gcn: 'GCN/OTO/2026/001',
               mo_ta_su_co: 'Xe va chạm quẹt vào dải phân cách',
@@ -191,7 +191,7 @@ const SEED_PROJECTS = [
             name: 'Yêu cầu phát hành hóa đơn tài chính GTGT điện tử',
             allowedPartners: ['pt-vifo'],
             requestSample: {
-              CpId: 'PARTNER_ANBIEN_2026',
+              CpId: 'partner',
               so_gcn: 'GCN/OTO/2026/001',
               MaSoThue: '0101234567',
               TenDonVi: 'Công ty TNHH A',
@@ -217,7 +217,7 @@ const SEED_PROJECTS = [
             name: 'Đối soát danh sách giao dịch định kỳ theo ngày dòng tiền',
             allowedPartners: ['pt-vifo', 'pt-momo'],
             requestSample: {
-              CpId: 'PARTNER_ANBIEN_2026',
+              CpId: 'partner',
               NgayDoiSoat: '11/06/2026',
               LoaiAnChi: 'OTO',
             },
@@ -242,7 +242,7 @@ const SEED_PROJECTS = [
             name: 'Tra cứu tỷ lệ chiết khấu thương mại của điểm bán hoa hồng',
             allowedPartners: ['pt-vifo'],
             requestSample: {
-              CpId: 'PARTNER_ANBIEN_2026',
+              CpId: 'partner',
               AgentCode: 'SUB_AG_HCM_01',
               MaLoaiAnChi: 'MOTO',
             },
